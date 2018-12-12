@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/mui.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+    <script src="data.js"></script>
+    <script src="js/rem.js"></script>
+    <script src="js/template.js"></script>
+    <script src="js/common.js"></script>
+    <style>
+        body {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mui-scroll-wrapper mui-content bg-gray">
+        <div class="message"></div>
+        <footer class="mui-bar mui-bar-tab">
+            <div class="action">
+                <!-- <form action=""> -->
+                <input type="text" class="margin-l-26" />
+                <!-- </form> -->
+                <span id="test-send" class="mui-icon mui-icon-plus margin-h-26"></span>
+            </div>
+        </footer>
+    </div>
+    <script id="test" type="text/html">
+        {{if messages}}
+        <ul>
+               {{ each messages item index}}
+            <li>
+                <p class="time">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+                    <span>{{ item.date| dateFormat 'hh:mm' }}</span>
+                </p>
+
+                <div class="{{ item.self ? 'self':'' }}">
+                    <img class="avatar" src="{{item.self ? userInfo.img : user.img}}" />
+                    <div class="text"><p>{{ item.content }}</p></div>
+                </div>
+            </li>
+            {{/each}}
+        </ul>
+        {{/if}}
+    </script>
+
+
+
+
+    <script src="js/mui.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
+
+    <script>
+        // 本人信息
+        var userInfo = {
+            name: 'coffce',
+            img: 'header01.png',
+            currentSessionId: 1 // 当前选中的会话
+        }
+        var session = getSession(data.sessions);
+        session.userInfo = userInfo; // 显示本人头像
+        $('.message').html(template('test', session));
+
+        // 会话列表中 该用户自己的会话内容
+        function getSession(data) {
+            return data.find(function (session) {
+                return session.id === userInfo.currentSessionId;
+            });
+        }
+
+
+
+        $(function () {
+            (function (mui, $) {
+
+                mui.init({
+                    swipeBack: false, //启用右滑关闭功能
+                });
+                mui('.mui-scroll-wrapper').scroll({
+                    indicators: false, //是否显示滚动条
+                    bounce: false //是否启用回弹
+                });
+
+
+                document.querySelector('.action').addEventListener('tap', function (e) {
+                    var oTarget = e.target;
+                    if (oTarget.id == 'test-send') {
+                        var content = $(oTarget).prev().val();
+                        sendMessage(content);
+                        // 刷新页面
+                        $('.message').html(template('test', session));
+                        // 清空 input
+                        $(oTarget).prev().val('');
+                    }
+                })
+
+
+                // 发送短信
+                function sendMessage(content) {
+                    session = getSession(data.sessions);
+                    session.messages.push({
+                        content: content,
+                        date: new Date(),
+                        self: true //根据该字段判断当前发消息的人
+                    });
+                }
+
+            })(mui, jQuery)
+        })
+    </script>
+</body>
+
+</html>

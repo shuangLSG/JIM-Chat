@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    
+    <!--BEGIN 打赏-->
+<div class="js_dialog" id="J_Dialog_dashang" >
+    <!--<div class="weui-mask"></div>-->
+    <div class="weui-dialog">
+        <i class="weui-xclose"></i>
+        <div class="weui-dialog__bd">
+            <!-- //打赏模板区-->
+            <div class="ws__popup-template">
+                <h2 class="hdTit">为喜欢的节目打赏</h2>
+                <div class="item flexbox">
+                    <input class="ipt-txt align-l flex1" type="text" name="dschooseProgram" placeholder="选择打赏节目" readonly />
+                </div>
+                <div class="item item-area">
+                    <textarea class="describe" name="content" placeholder="输入打赏语，30字以内（选填）"></textarea>
+                </div>
+                <div class="item item-gift" id="J__chooseGift">
+                    <div class="gift flexbox selected" data-gift="001">
+                        <label class="txt"><span>豪车</span><em class="time">霸屏50秒</em></label>
+                        <span class="amount">￥<em>12</em> <i class="chkbox"></i></span>
+                    </div>
+                    <div class="gift flexbox" data-gift="002">
+                        <label class="txt"><span>动人玫瑰</span><em class="time">霸屏20秒</em></label>
+                        <span class="amount">￥<em>8</em> <i class="chkbox"></i></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="weui-dialog__ft">
+            <a href="javascript:;" class="weui-dialog__btn weui-dialog__btn_primary" style="background: #ff4400; border-radius: 4px; color: #fff;">支付 <span>￥<em class="moneyNum">12</em></span> 打赏</a>
+        </div>
+    </div>
+</div>
+<!--END 打赏-->
+
+<script src="">
+    /* ——聊天编辑器区域 */
+var $editor = $(".J__editorText"), editor = $editor[0];
+var $face = $(".emotion-area dd img");
+$face.on("click", function(e){
+    if($(this).hasClass("face")){ //图像
+        var img = $(this)[0].cloneNode(true);
+        
+        editor.focus();
+        setTimeout(function(){
+            var range, node;
+            if(document.selection && document.selection.createRange){
+                document.selection.createRange().pasteHTML(img);
+            }else if(window.getSelection && window.getSelection().getRangeAt){
+                range = window.getSelection().getRangeAt(0);
+                range.insertNode(img);
+                range.collapse(false);
+                
+                var sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }, 16);
+    }else if($(this).hasClass("del")){ //删除
+        editor.focus();
+        
+        range = window.getSelection().getRangeAt(0);
+        range.collapse(false);
+        
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        document.execCommand("delete");
+    }
+});
+
+//...格式化编辑器包含标签
+editor.addEventListener("focus", function(evt) {
+    surrounds()
+}, true);
+editor.addEventListener("input", function(evt) {
+    surrounds();
+}, false);
+function surrounds() {
+    setTimeout(function () { //chrome
+        var sel = window.getSelection();
+        var anchorNode = sel.anchorNode;
+        if (!anchorNode) return;
+        if (sel.anchorNode === editor ||
+            (sel.anchorNode.nodeType === 3 && sel.anchorNode.parentNode === editor)) {
+            
+            var range = sel.getRangeAt(0);
+            var p = document.createElement("p");
+            range.surroundContents(p);
+            range.selectNodeContents(p);
+            range.insertNode(document.createElement("br")); //chrome
+            sel.collapse(p, 0);
+            
+            (function clearBr() {
+                var elems = [].slice.call(editor.children);
+                for (var i = 0, len = elems.length; i < len; i++) {
+                    var el = elems[i];
+                    if (el.tagName.toLowerCase() == "br") {
+                        editor.removeChild(el);
+                    }
+                }
+                elems.length = 0;
+            })();
+        }
+    }, 0);
+}
+
+//...滚动到聊天内容底部
+function scrollToBottom(){
+    $('.ws__chatMsg-panel').animate({scrollTop: $("#J__chatMsgList").height()}, 300);
+}
+</script>
+</body>
+</html>

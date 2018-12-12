@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+
+
+    <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
+    <script>
+        window.JIM = new JMessage({
+            debug: true
+        });
+        var appkey = '5244aea56672ae685d799270';
+
+        function init() {
+            JIM.init({
+                "appkey": '4f7aef34fb361292c566a1cd',
+                "random_str": "404",
+                "signature": '7db047a67a9d7293850ac69d14cc82bf',
+                "timestamp": 1507882399401,
+                "flag": 1
+
+            }).onSuccess(function (data) {
+                console.log('init success:----------------------------------')
+                console.log(data);
+            }).onFail(function (data) {
+                console.log('error:' + JSON.stringify(data))
+            });
+        }
+
+        init();
+
+        // 初始化状态成功后 再进行后续操作
+        setTimeout(function () {
+            if (JIM.isInit()) {
+                register();
+            }
+        }, 1000)
+
+
+        function register() {
+            JIM.register({
+                'username': 'xuqijin110',
+                'password': '123456',
+                'nickname': 'nickname'
+            }).onSuccess(function (data) {
+                console.log('register success:----------------------------------')
+                console.log(data);
+            }).onFail(function (data) {
+                console.log(data)
+            });
+        }
+
+        setTimeout(function () {
+            if (JIM.isInit() && !JIM.isLogin()) {
+                login();
+            }
+        }, 1000)
+
+
+        function login() {
+            JIM.login({
+                'username': 'xuqijin110',
+                'password': '123456'
+            }).onSuccess(function (data) {
+                console.log('login success:----------------------------------')
+                console.log(data);
+
+                console.log('onMsgReceive接受消息:----------------------------------')
+                JIM.onMsgReceive(function (data) {
+                    console.log(data);
+                });
+
+                // JIM.onEventNotification(function (data) {
+                //     console.log('event_receive: ' + JSON.stringify(data));
+                // });
+
+                // JIM.onSyncConversation(function (data) { //离线消息同步监听
+                //     console.log(data);
+                // });
+
+                // JIM.onUserInfUpdate(function (data) {
+                //     console.log('onUserInfUpdate : ' + JSON.stringify(data));
+                // });
+
+                // JIM.onSyncEvent(function (data) {
+                //     console.log('onSyncEvent : ' + JSON.stringify(data));
+                // });
+
+                // JIM.onMsgReceiptChange(function (data) {
+                //     console.log('onMsgReceiptChange : ' + JSON.stringify(data));
+
+                // });
+
+                // JIM.onSyncMsgReceipt(function (data) {
+                //     console.log('onSyncMsgReceipt : ' + JSON.stringify(data));
+
+                // });
+
+                // JIM.onMutiUnreadMsgUpdate(function (data) {
+                //     console.log('onConversationUpdate : ' + JSON.stringify(data));
+                // });
+
+                // JIM.onTransMsgRec(function (data) {
+                //     console.log('onTransMsgRec : ' + JSON.stringify(data));
+                // });
+
+                // JIM.onRoomMsg(function (data) {
+                //     console.log('onRoomMsg  : ' + JSON.stringify(data));
+                // });
+
+            }).onFail(function (data) {
+
+                console.log('error:' + JSON.stringify(data));
+            }).onTimeout(function (data) {
+                console.log('timeout:' + JSON.stringify(data));
+            });
+        }
+    </script>
+</body>
+
+</html>
