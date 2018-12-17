@@ -7,6 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <script src="data.js"></script>
+    <link rel="stylesheet" href="css/mui.min.css">    
+    <link rel="stylesheet" href="css/chat.css">
     
     <style>
         body {
@@ -22,8 +24,11 @@
 
 <body>
     <div class="mui-scroll-wrapper mui-content bg-gray">
-        <div class="message"></div>
-        <footer class="mui-bar mui-bar-tab">
+
+        <div class="mui-scroll message"></div>
+        
+    </div>
+    <footer class="mui-bar mui-bar-tab">
             <div class="action">
                 <!-- <form action=""> -->
                 <input type="text" class="margin-l-26" />
@@ -31,7 +36,6 @@
                 <span id="test-send" class="mui-icon mui-icon-plus margin-h-26"></span>
             </div>
         </footer>
-    </div>
     <!-- <p class="time">  
             {{item}}
                                 <span>{{ item.content.create_time| dateFormat 'hh:mm' }}</span>
@@ -48,7 +52,11 @@
                     {{ each item msg index}}
                     <li>
                         {{if msg.content}}
-                            {{msg.content.msg_body.text}}
+                            <div>
+                                {{if msg.content.msg_body.text}}
+                                <div class="text"><p>{{msg.content.msg_body.text}}</p></div>
+                                {{/if}}
+                            </div>
                         {{/if}}
                     </li>
                     {{/each}}
@@ -65,6 +73,23 @@
     <script src="js/mui.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
+    <script>
+        $(function () {
+            (function (mui, $) {
+
+                mui.init({
+                    swipeBack: false, //启用右滑关闭功能
+                });
+                mui('.mui-scroll-wrapper').scroll({
+                    indicators: false, //是否显示滚动条
+                    bounce: false //是否启用回弹
+                });
+
+
+
+            })(mui, jQuery)
+        })
+    </script>
     <script>
    
         window.JIM = new JMessage({
