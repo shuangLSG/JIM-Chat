@@ -27,3 +27,8 @@ template.defaults.imports.dateFormat = function (date, format) {
 template.defaults.imports.timestamp = function (value) {
     return value * 1000
 };
+
+
+template.defaults.imports.showContent = function (value) {
+    return value.msg_body.text
+};

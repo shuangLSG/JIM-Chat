@@ -6,13 +6,67 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
+    <script src="data.js"></script>
+    
+    <style>
+        body {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
+        }
+    </style>
 </head>
 
 <body>
+    <div class="mui-scroll-wrapper mui-content bg-gray">
+        <div class="message"></div>
+        <footer class="mui-bar mui-bar-tab">
+            <div class="action">
+                <!-- <form action=""> -->
+                <input type="text" class="margin-l-26" />
+                <!-- </form> -->
+                <span id="test-send" class="mui-icon mui-icon-plus margin-h-26"></span>
+            </div>
+        </footer>
+    </div>
+    <!-- <p class="time">  
+            {{item}}
+                                <span>{{ item.content.create_time| dateFormat 'hh:mm' }}</span>
+                            </p>
+            
+                            <div class="{{ item.self ? 'self':'' }}">
+                                <img class="avatar" src="{{item.self ? userInfo.img : user.img}}" />
+                                <div class="text"><p>{{ item.content.msg_body.text }}</p></div>
+                            </div> -->
+    <script id="test" type="text/html">
+        <ul>
+            {{each data msgs index}}
+               {{ each msgs item index}}
+                    {{ each item msg index}}
+                    <li>
+                        {{if msg.content}}
+                            {{msg.content.msg_body.text}}
+                        {{/if}}
+                    </li>
+                    {{/each}}
+                {{/each}}
+            {{/each}}
+        </ul>
+    </script>
 
 
+    <script src="js/rem.js"></script>
+    <script src="js/template.js"></script>
+    <script src="js/common.js"></script>
+    
+    <script src="js/mui.min.js"></script>
+    <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script>
+   
         window.JIM = new JMessage({
             debug: true
         });
@@ -72,10 +126,18 @@
                 console.log('login success:----------------------------------')
                 console.log(data);
 
-                console.log('onMsgReceive接受消息:----------------------------------')
                 JIM.onMsgReceive(function (data) {
-                    console.log(data);
+                    console.log('onMsgReceive接受消息:----------------------------------')
+                    // console.log(data.messages)
                 });
+                JIM.onSyncConversation(function (data) {
+                    console.log('onSyncConversation接受离线消息:----------------------------------')
+
+                    console.log(data)
+                    $('.message').append(template('test', {
+                        data: data
+                    }));
+                })
 
                 // JIM.onEventNotification(function (data) {
                 //     console.log('event_receive: ' + JSON.stringify(data));
