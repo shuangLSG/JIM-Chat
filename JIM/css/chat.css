@@ -39,7 +39,7 @@ textarea {
 }
 
 .message li {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.3rem;
 }
 
 .message .time {
@@ -88,19 +88,24 @@ textarea {
     border: 4px solid transparent;
     border-right-color: #fff;
 }
-
+.mui-bar{
+    box-shadow: 0 0 2px rgba(0,0,0,.2);
+}
 .action {
     display: flex;
     align-items: center;
 }
-
+.action textarea,
 .action input {
     height: 0.98rem;
     font-size: 0.4rem;
     padding: 0.2rem;
     margin-bottom: 0;
 }
-
+.action .mui-btn{
+    top:0;
+    margin-right: 0.2rem;
+}
 .action .mui-icon-plus {
     font-size: 0.9rem;
 }
