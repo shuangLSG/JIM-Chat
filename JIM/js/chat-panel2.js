@@ -24,7 +24,7 @@ $(function () {
             debug: true
         });
         var global = {
-            user: 'xuqijin110',
+            username: "xuqijin1101",
             password: '123456',
             avatarUrl:'http://image.bfy100.com/1541670828jpeg'
         }
@@ -103,7 +103,7 @@ $(function () {
 
                     var activePerson = null;
                     data.forEach(item => {
-                        if (item.from_username == global.user) {
+                        if (item.from_username == global.username) {
                             activePerson = item;
                         }
                     });
