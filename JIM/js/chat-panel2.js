@@ -26,6 +26,7 @@ $(function () {
         var global = {
             user: 'xuqijin110',
             password: '123456',
+            avatarUrl:'http://image.bfy100.com/1541670828jpeg'
         }
         var targetUser={
             across_user : 'test0022',
@@ -121,6 +122,8 @@ $(function () {
                         sendSingleMsg();
                     }
                 })
+                // 获取聊天室信息
+                getAppkeyRoom();
                 // JIM.onEventNotification(function (data) {
                 //     console.log('event_receive: ' + JSON.stringify(data));
                 // });
@@ -176,6 +179,16 @@ $(function () {
                 console.log('error:' + JSON.stringify(data));
             });
 
+        }
+
+        function getAppkeyRoom() {
+            JIM.getAppkeyChatrooms({
+                'start': '0'
+            }).onSuccess(function (data) {
+                console.log(data);
+            }).onFail(function (data) {
+                console.log(data);
+            });
         }
 
         function sendSingleMsg(oTarget) {
