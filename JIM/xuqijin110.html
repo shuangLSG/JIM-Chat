@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+    <title>xuqijin110</title>
     <script src="data.js"></script>
     <link rel="stylesheet" href="css/mui.min.css">
     <link rel="stylesheet" href="css/chat.css">
@@ -57,7 +57,7 @@
     <script id="test" type="text/html">
         <ul>
             {{each msgs i index}}
-                {{if i.content && global.user != i.content.from_id && i.msg_type !== 5}}
+                {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
                     {{include 'recivemsg' i}}
                 {{else}}
                     {{include 'singlemsg' i}}
@@ -101,7 +101,8 @@
     <script src="js/mui.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
-    <script src="js/chat-panel2.js"></script>
+    <script src="chatJIM/services/api.service.js"></script>
+    <script src="js/xuqijin110.js"></script>
         
 </body>
 

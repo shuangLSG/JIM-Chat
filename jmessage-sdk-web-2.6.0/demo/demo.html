@@ -215,58 +215,57 @@
 
             console.log('success:' + JSON.stringify(data));
             appendToDashboard(JSON.stringify(data));
-
+            // 聊天消息实时监听
             JIM.onMsgReceive(function (data) {
                 data = JSON.stringify(data);
                 console.log('1msg_receive:' + data);
                 appendToDashboard('msg_receive:' + data);
-
             });
 
-
+            // 业务事件监听
             JIM.onEventNotification(function (data) {
                 console.log('event_receive: ' + JSON.stringify(data));
                 appendToDashboard('event_receive: ' + JSON.stringify(data));
             });
-
+            // 离线消息同步监听
             JIM.onSyncConversation(function (data) { //离线消息同步监听
                 console.log(data);
                 appendToDashboard('event_receive: ' + JSON.stringify(data));
             });
-
+            // 用户信息变更监听
             JIM.onUserInfUpdate(function (data) {
                 console.log('onUserInfUpdate : ' + JSON.stringify(data));
                 appendToDashboard('onUserInfUpdate : ' + JSON.stringify(data));
             });
-
+            // 业务事件同步监听
             JIM.onSyncEvent(function (data) {
                 console.log('onSyncEvent : ' + JSON.stringify(data));
                 appendToDashboard('onSyncEvent : ' + JSON.stringify(data));
             });
-
+            // 消息已读数变更事件实时监听
             JIM.onMsgReceiptChange(function (data) {
                 console.log('onMsgReceiptChange : ' + JSON.stringify(data));
                 appendToDashboard('onMsgReceiptChange : ' + JSON.stringify(data));
 
             });
-
+            // 消息已读数变更事件同步监听
             JIM.onSyncMsgReceipt(function (data) {
                 console.log('onSyncMsgReceipt : ' + JSON.stringify(data));
                 appendToDashboard('onSyncMsgReceipt : ' + JSON.stringify(data));
 
             });
-
+            // 会话未读数变更监听（多端在线）
             JIM.onMutiUnreadMsgUpdate(function (data) {
                 console.log('onConversationUpdate : ' + JSON.stringify(data));
                 appendToDashboard('onConversationUpdate : ' + JSON.stringify(data));
 
             });
-
+            // 消息透传监听
             JIM.onTransMsgRec(function (data) {
                 console.log('onTransMsgRec : ' + JSON.stringify(data));
                 appendToDashboard('onTransMsgRec : ' + JSON.stringify(data));
             });
-
+            // 聊天室消息监听
             JIM.onRoomMsg(function (data) {
                 console.log('onRoomMsg  : ' + JSON.stringify(data));
                 appendToDashboard('onRoomMsg  : ' + JSON.stringify(data));

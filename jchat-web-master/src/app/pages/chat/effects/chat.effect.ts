@@ -66,7 +66,7 @@ export class ChatEffect {
                 payload: info.data
             });
             return { type: '[chat] receive single message useless' };
-        });
+        }); 
     // 接收到群聊新消息
     @Effect()
     private receiveGroupMessage$: Observable<Action> = this.actions$
