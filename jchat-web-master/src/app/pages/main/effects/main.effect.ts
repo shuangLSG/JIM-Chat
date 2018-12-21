@@ -282,7 +282,7 @@ export class MainEffect {
             return { type: '[main] modify password useless' };
         });
     // 创建单聊/添加好友
-    @Effect()
+    @Effect() 
     private createSingleChatAction$: Observable<Action> = this.actions$
         .ofType(mainAction.createSingleChatAction)
         .map(toPayload)

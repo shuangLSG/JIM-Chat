@@ -348,7 +348,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                 if (chatState.isLoaded) {
                     this.isLoaded = chatState.isLoaded;
                     this.isLoadedSubject$.next(this.isLoaded);
-                }
+                } 
                 break;
             case chatAction.receiveMessageSuccess:
                 if (chatState.newMessageIsActive) {

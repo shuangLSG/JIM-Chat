@@ -26,8 +26,10 @@
 </head>
 
 <body>
-    <div class="mui-scroll-wrapper mui-content bg-gray">
-        <div class="mui-scroll message"></div>
+    <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
+        <div class="mui-scroll message">
+                <ul></ul>
+        </div>
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
@@ -51,38 +53,50 @@
             <span>昨天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
             {{else if showTime(ctime_ms)==='today'}}
             <span>{{ ctime_ms |dateFormat 'hh:mm'}}</span>
+            <!-- {{else if showTime(ctime_ms)==='just'}}
+            <span>刚刚</span> -->
             {{/if}}
         </p>
     </script>
     <script id="test" type="text/html">
-        <ul>
             {{each msgs i index}}
                 {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
-                    
-                <li>
-                    {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
-                        {{include 'room-panel-time' i}}
-                        <div>
-                            <img class="avatar" src="" />
-                            <div class="text"><p>{{i.content.msg_body.text}}</p></div>
-                        </div>
-                    {{/if}}
-                </li>
-                    
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div>
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div>   
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
                 {{else}}
-                    {{include 'singlemsg' i }}
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div class="self">
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div> 
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
                 {{/if}}
             {{/each}}
-        </ul>
     </script>
     
     <!-- 别人发送的消息 -->
     <script id="recivemsg" type="text/html">
-        <li>
+        <li>{{content}}
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 {{include 'room-panel-time' i}}
-                <div>
-                    <img class="avatar" src="{{content.avatarUrl}}" />
+                <div >
+                    <div class="avatar-box">
+                        <img class="avatar" src="{{content.avatarUrl}}" />
+                    </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
                 </div>
             {{/if}}
@@ -91,13 +105,14 @@
     <!-- 自己发送的消息 -->
     <script id="singlemsg" type="text/html">
         <li>
-            <!-- 文本 -->
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 
                 {{include 'room-panel-time' i}}
 
                 <div class="self">
-                    <img class="avatar" src="" />
+                    <div class="avatar-box">
+                        <img class="avatar" src="{{content.avatarUrl}}" />
+                    </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
                 </div>
             {{/if}}

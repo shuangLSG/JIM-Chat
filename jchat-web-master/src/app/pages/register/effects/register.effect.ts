@@ -68,7 +68,7 @@ export class RegisterEffect {
                     this.store$.dispatch({
                         type: appAction.errorApiTip,
                         payload: data
-                    });
+                    }); 
                 } else {
                     usernameTip = '注册失败';
                     this.store$.dispatch({

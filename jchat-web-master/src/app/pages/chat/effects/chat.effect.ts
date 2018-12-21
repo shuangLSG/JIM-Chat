@@ -42,7 +42,7 @@ export class ChatEffect {
     @Effect()
     private receiveSingleMessage$: Observable<Action> = this.actions$
         .ofType(chatAction.receiveSingleMessage)
-        .map(toPayload)
+        .map(toPayload) 
         .switchMap(async (info) => {
             let promises = [];
             const content = info.data.messages[0].content;

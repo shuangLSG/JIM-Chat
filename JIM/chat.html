@@ -21,6 +21,9 @@
             bottom: 0;
             -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
         }
+        div.avatar{
+
+        }
     </style>
 </head>
 
@@ -46,7 +49,9 @@
                 </p>
 
                 <div class="{{ item.self ? 'self':'' }}">
+                    <div class="avatar-box">
                     <img class="avatar" src="{{item.self ? userInfo.img : user.img}}" />
+                    </div>
                     <div class="text"><p>{{ item.content }}</p></div>
                 </div>
             </li>
@@ -66,7 +71,7 @@
         // 本人信息
         var userInfo = {
             name: 'coffce',
-            img: 'header01.png',
+            img: 'http://dlop.im.jiguang.cn/qiniu/image/j/38C1D79E95D7F5329938509EE57C0B4B.jpg?e=1545383981&token=pNf8Uh3lsdBw4BGIUE1tgWT8dPKDDyzuOGEgtEJi:upYJcWVXPwT6K7vQ_hAsDAbMEHE=',
             currentSessionId: 1 // 当前选中的会话
         }
         var session = getSession(data.sessions);

@@ -53,13 +53,18 @@ textarea {
     font-size: 0.3rem;
     color: #b2b2b2;
 }
-
-.message .avatar {
-    float: left;
+.message .avatar-box{
     width: 1.24rem;
+    height: 1.24rem;
+    float: left;
     margin: 0 0.3rem;
     border-radius: 50%;
-    background-color: #000;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+}
+.message .avatar-box img {
+    height: 100%;
 }
 
 .message .text {
@@ -114,7 +119,7 @@ textarea {
     text-align: right;
 }
 
-.message .self .avatar {
+.message .self .avatar-box {
     float: right;
 }
 

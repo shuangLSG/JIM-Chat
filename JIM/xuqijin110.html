@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>xuqijin110</title>
+    <title>test0022</title>
     <script src="data.js"></script>
     <link rel="stylesheet" href="css/mui.min.css">
     <link rel="stylesheet" href="css/chat.css">
@@ -26,8 +26,10 @@
 </head>
 
 <body>
-    <div class="mui-scroll-wrapper mui-content bg-gray">
-        <div class="mui-scroll message"></div>
+    <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
+        <div class="mui-scroll message">
+                <ul></ul>
+        </div>
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
@@ -51,19 +53,39 @@
             <span>昨天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
             {{else if showTime(ctime_ms)==='today'}}
             <span>{{ ctime_ms |dateFormat 'hh:mm'}}</span>
+            <!-- {{else if showTime(ctime_ms)==='just'}}
+            <span>刚刚</span> -->
             {{/if}}
         </p>
     </script>
     <script id="test" type="text/html">
-        <ul>
             {{each msgs i index}}
                 {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
-                    {{include 'recivemsg' i}}
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div>
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div>   
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
                 {{else}}
-                    {{include 'singlemsg' i}}
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div class="self">
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div> 
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
                 {{/if}}
             {{/each}}
-        </ul>
     </script>
     
     <!-- 别人发送的消息 -->
@@ -71,8 +93,8 @@
         <li>
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 {{include 'room-panel-time' i}}
-                <div>
-                    <img class="avatar" src="" />
+                <div >
+                    <img class="avatar" src="{{content.avatarUrl}}" />
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
                 </div>
             {{/if}}

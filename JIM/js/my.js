@@ -1,8 +1,9 @@
+
+
 $(function () {
     (function (mui, $) {
         var conversationList = null,
-            chatState = null,
-            defaultAvatar='logo.png';
+            chatState = null;
 
 
         /** ============== mui ==================*/
@@ -31,7 +32,6 @@ $(function () {
             // 添加字段 ctime_ms
             msg.ctime_ms = msg.content.create_time;
             // 刷新页面
-            console.log(template('singlemsg', msg))
             $('.message ul').append(template('singlemsg', msg));
             // 清空 input
             $('.action textarea').val('');
@@ -47,7 +47,7 @@ $(function () {
         var flage = true; //判断条件  
         function pulldownRefresh() {
             setTimeout(function () {
-
+             
                 // 第二页： 21/40
                 if (conversationList.length <= pageNumber * loadingCount) { // 获取到第3页的数据就结束上拉操作
                     flage = false;
@@ -65,15 +65,15 @@ $(function () {
                     msgs: msg,
                     global: global
                 }
-
-                // $('.message ul').html(template('test', json));
+                
+                $('.message ul').html(template('test', json));
 
                 mui('#pullrefresh').pullRefresh().endPullupToRefresh(!flage);
 
             }, 500);
 
         }
-
+        
         /** =================================== 
                            JIM
         ======================================*/
@@ -81,7 +81,7 @@ $(function () {
             debug: false
         });
         var global = {
-            username: "test0022",
+            username: "liu_sg",
             password: '123456',
             media_id: './logo.png',
             nickname: 'supvp.'
@@ -95,11 +95,12 @@ $(function () {
         var userInfo = null;
         var conversationMsg = null; // 离线信息
         init();
-
-
+        
+       
         function register() {
             JIM.register({
                 ...global,
+                avatar:'./logo.png'
             }).onSuccess(function (data) {
                 console.log('注册 success:----------------------------------')
                 console.log(data);
@@ -114,6 +115,7 @@ $(function () {
                 "timestamp": 1507882399401,
                 "flag": 1
             }).onSuccess(function (data) {
+                register()
                 if (!JIM.isLogin()) {
                     login();
                 }
@@ -140,19 +142,19 @@ $(function () {
         }
         // 接收到单聊新消息
         function receiveSingleMessage(data) {
-            console.log(data)
             const content = data.messages[0].content;
+            console.log(chatState)
             const result = chatState.conversations.filter((conversation) => {
                 return data.messages[0].content.from_id === conversation.name;
             });
             if (result.length === 0) {
                 const messages = data.messages[0];
-                content = getMsgAvatarUrl(messages).content;
+                getMsgAvatarUrl(messages, promises);
             } else {
-                // 给已有的单聊用户添加头像()
-                content.avatarUrl = result[0].avatarUrl;
+                // 给已有的单聊用户添加头像
+                content.avatarUrl = result[0].avatar;
             }
-            return data.messages[0];
+            return content;
         }
         // 获取新消息的用户头像url
         function getMsgAvatarUrl(messages) {
@@ -161,28 +163,6 @@ $(function () {
             const userObj = {
                 username
             };
-            JIM.getUserInfo({
-                ...userObj
-            }).onSuccess(function (data) {
-                if (!data.code && data.user_info.avatar !== '') {
-                    const urlObj = {
-                        media_id: data.user_info.avatar
-                    };
-                    JIM.getResource({
-                        ...urlObj
-                    }).onSuccess(function (data) {
-                        if (data.code) {
-                            messages.content.avatarUrl = '';
-                        } else {
-                            messages.content.avatarUrl = pro3.url;
-                        }
-                    })
-                }
-
-            }).onFail(function (data) {
-                console.log(data);
-            });
-            return messages;
         }
 
 
@@ -205,7 +185,7 @@ $(function () {
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
-
+                    
                     console.log('--------------')
                     console.log(data);
                     // 获取客服的离线消息
@@ -227,21 +207,29 @@ $(function () {
                         msgs: conversationList,
                         global: global
                     }
-                    // 异步操作延迟
-                    setTimeout(function () {
-                        $('.message ul').append(template('test', json));
-                        scrollBottom(); // 滚动到底部
-                    }, 800)
-
-                });
-
-
-                JIM.onMsgReceive(function (data) {
-                    var singleMsgs = receiveSingleMessage(data);
-                    console.log(singleMsgs)
-                    $('.message ul').append(template('recivemsg', singleMsgs));
+                    console.log(json.msgs)
+                    console.log(json.msgs[281])
+                    $('.message ul').append(template('test', json));
                     scrollBottom(); // 滚动到底部
                 });
+
+  // 获取单聊对象的用户信息
+  JIM.getUserInfo({
+    username: 'test0022'
+}).onSuccess(function (data) {
+    console.log(data)
+    
+}).onFail(function (data) {
+    console.log(data);
+});
+                // JIM.onMsgReceive(function (data) {
+
+                //     var singleMsgs = receiveSingleMessage(data);
+                //     console.log(singleMsgs)
+                //     $('.message').append(template('recivemsg', singleMsgs));
+                //     scrollBottom(); // 滚动到底部
+                //     console.log('聊天消息实时监听');
+                // });
 
 
                 // 发送信息
@@ -258,26 +246,13 @@ $(function () {
         function getConversation() {
             console.log('获取对话列表---------')
             JIM.getConversation().onSuccess(function (data) {
-                data.conversations.forEach((item, index) => {
-                    if (!item.avatarUrl ||item.avatarUrl ==="") {
-                        item.avatarUrl = defaultAvatar;
-                    }
-                });
+                // data.conversations = data.conversations.sort(function (a, b) {
+                //     return b.mtime - a.mtime;
+                // })
                 chatState = data;
                 console.log(chatState)
             }).onFail(function (data) {
                 console.log('error:' + JSON.stringify(data));
-            });
-        }
-
-        function updateSelfAvatar() {
-            JIM.updateSelfAvatar({
-                'avatar': '<formData with image>'
-            }).onSuccess(function (data) {
-                //data.code 返回码
-                //data.message 描述
-            }).onFail(function (data) {
-                //同上
             });
         }
 
@@ -320,7 +295,6 @@ $(function () {
                 JIM.getUserInfo({
                     ...userObj
                 }).onSuccess(function (data) {
-                    console.log(data)
                     if (!data.code && data.user_info.avatar !== '') {
                         const urlObj = {
                             media_id: data.user_info.avatar
@@ -338,7 +312,6 @@ $(function () {
                             }
                         })
                     }
-
                 }).onFail(function (data) {
                     console.log(data);
                 });
@@ -367,13 +340,13 @@ $(function () {
                 //         messages.content.avatarUrl = pro3.url;
                 //     }
                 // }
-                // var json = {
-                //     msgs: activePerson.msgs,
-                //     user_info: data.user_info,
-                //     global: global
-                // }
-                // $('.message').append(template('test', json));
-                // scrollBottom(); // 滚动到底部
+                var json = {
+                    msgs: activePerson.msgs,
+                    user_info: data.user_info,
+                    global: global
+                }
+                $('.message').append(template('test', json));
+                scrollBottom(); // 滚动到底部
             }).onFail(function (data) {
                 console.log(data);
             });
@@ -381,7 +354,6 @@ $(function () {
         // 发送新消息
         function sendSingleMsg(oTarget) {
             var content = $('.action textarea').val();
-            if (content == '') return;
             JIM.sendSingleMsg({
                 'target_username': targetUser.across_user,
                 'appkey': targetUser.across_appkey,
