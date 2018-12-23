@@ -8,6 +8,12 @@ const apiService = {
     getUserInfo: function (userInfoObj = {}, success, error, timeout) {
         return this.callback(JIM.getUserInfo(userInfoObj), success, error, timeout);
     },
+    sendSingleMsg:function (singleMsg = {}, success, error, timeout) {
+        return this.callback(JIM.sendSingleMsg(singleMsg), success, error, timeout);
+    },
+    downloadThumbUserAvatar:function (myAvatar = {}, success, error, timeout) {
+        return this.callback(JIM.downloadThumbUserAvatar(myAvatar), success, error, timeout);
+    },
     callback :function(obj, ...args){
         return new Promise((resolve) => {
             if (obj && obj.onSuccess) {

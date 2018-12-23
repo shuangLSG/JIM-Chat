@@ -2,7 +2,7 @@ $(function () {
     (function (mui, $) {
         var conversationList = null,
             chatState = null,
-            defaultAvatar='logo.png';
+            defaultAvatar = 'logo.png';
 
 
         /** ============== mui ==================*/
@@ -27,16 +27,6 @@ $(function () {
             mui('.mui-scroll-wrapper').scroll().scrollToBottom(100);
         }
 
-        function createSelfMsgDom(msg) {
-            // 添加字段 ctime_ms
-            msg.ctime_ms = msg.content.create_time;
-            // 刷新页面
-            console.log(template('singlemsg', msg))
-            $('.message ul').append(template('singlemsg', msg));
-            // 清空 input
-            $('.action textarea').val('');
-            scrollBottom(); // 滚动到底部
-        }
 
         /**
          * 下拉刷新具体业务实现
@@ -152,7 +142,9 @@ $(function () {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
-            return data.messages[0];
+            console.log(template('recivemsg', data.messages[0]))
+            $('.message ul').append(template('recivemsg', data.messages[0]));
+            scrollBottom(); // 滚动到底部
         }
         // 获取新消息的用户头像url
         function getMsgAvatarUrl(messages) {
@@ -205,9 +197,6 @@ $(function () {
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
-
-                    console.log('--------------')
-                    console.log(data);
                     // 获取客服的离线消息
                     var activeIndex = null;
                     data.forEach((item, index) => {
@@ -237,29 +226,31 @@ $(function () {
 
 
                 JIM.onMsgReceive(function (data) {
-                    var singleMsgs = receiveSingleMessage(data);
-                    console.log(singleMsgs)
-                    $('.message ul').append(template('recivemsg', singleMsgs));
-                    scrollBottom(); // 滚动到底部
+                    receiveSingleMessage(data);
                 });
 
 
-                // 发送信息
-                document.querySelector('.action').addEventListener('tap', function (e) {
-                    var oTarget = e.target;
-                    if (oTarget.id == 'test-send') {
-                        sendSingleMsg();
-                    }
-                })
+
+
             })
         }
 
+        // 发送信息
+        document.querySelector('.action').addEventListener('tap', function (e) {
+            var oTarget = e.target;
+            if (oTarget.id == 'test-send') {
+                sendSingleMsg();
+            }
+        })
+
         //获取对话列表
+
         function getConversation() {
             console.log('获取对话列表---------')
+
             JIM.getConversation().onSuccess(function (data) {
                 data.conversations.forEach((item, index) => {
-                    if (!item.avatarUrl ||item.avatarUrl ==="") {
+                    if (!item.avatarUrl || item.avatarUrl === "") {
                         item.avatarUrl = defaultAvatar;
                     }
                 });
@@ -379,24 +370,54 @@ $(function () {
             });
         }
         // 发送新消息
-        function sendSingleMsg(oTarget) {
-            var content = $('.action textarea').val();
+        async function sendSingleMsg(oTarget) {
+            var content = $('.action textarea').val(),
+                msg = null,
+                data = null;
             if (content == '') return;
-            JIM.sendSingleMsg({
+            var json = {
                 'target_username': targetUser.across_user,
                 'appkey': targetUser.across_appkey,
                 'content': content,
                 'no_offline': false,
                 'no_notification': false,
                 need_receipt: true
-            }).onSuccess(function (data, msg) {
-                createSelfMsgDom(msg)
+            }
+            var msg = await apiService.sendSingleMsg(json);
+            var json = {
+                ...msg,
+                content: { msg_body: { text: content } },
+                msg_type: 'text'
+            }
+            console.log(json)
+            $('.message ul').append(template('singlemsg', json));
+                // 清空 input
+                $('.action textarea').val('');
+                scrollBottom(); // 滚动到底部
 
-                console.log(data);
-                console.log(msg);
-            }).onFail(function (data) {
-                console.log('error:' + JSON.stringify(data));
-            });
+
+            // JIM.sendSingleMsg({
+            //     ...json
+            // }).onSuccess(function (data, msg) {
+            //     console.log(data);
+            //     console.log(msg);
+            //     var json = {
+            //         ...msg,
+            //         avatarUrl: global.media_id
+            //     }
+            //     $('.message ul').append(template('singlemsg', json));
+            //     // 清空 input
+            //     $('.action textarea').val('');
+            //     scrollBottom(); // 滚动到底部
+
+            // }).onFail(function (data) {
+            //     console.log('error:' + JSON.stringify(data));
+            // });
+            // return {
+            //     ...msg,
+            //     ...data
+            // };
         }
     })(mui, jQuery)
 })
+

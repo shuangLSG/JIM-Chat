@@ -17,9 +17,11 @@
             right: 0;
             top: 0;
             bottom: 0;
-            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
+            -webkit-overflow-scrolling: touch;
+            /* 解决ios滑动不流畅问题 */
         }
-        .mui-scroll-wrapper{
+
+        .mui-scroll-wrapper {
             padding-bottom: 60px;
         }
     </style>
@@ -28,7 +30,7 @@
 <body>
     <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
         <div class="mui-scroll message">
-                <ul></ul>
+            <ul></ul>
         </div>
     </div>
     <footer class="mui-bar mui-bar-tab">
@@ -51,12 +53,10 @@
             <span>前天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
             {{else if showTime(ctime_ms)==='yesterday'}}
             <span>昨天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
-            {{else if showTime(ctime_ms)==='today'}}
+            {{else if showTime(content.create_time)==='today'}}
             <span>{{ ctime_ms |dateFormat 'hh:mm'}}</span>
-            <!-- {{else if showTime(ctime_ms)==='just'}}
-            <span>刚刚</span> -->
             {{/if}}
-        </p>
+        </p>p
     </script>
     <script id="test" type="text/html">
             {{each msgs i index}}
@@ -87,7 +87,7 @@
                 {{/if}}
             {{/each}}
     </script>
-    
+
     <!-- 别人发送的消息 -->
     <script id="recivemsg" type="text/html">
         <li>
@@ -103,10 +103,11 @@
     <!-- 自己发送的消息 -->
     <script id="singlemsg" type="text/html">
         <li>
+            {{content.msg_body.text}}
             <!-- 文本 -->
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 
-                {{include 'room-panel-time' i}}
+                <p class="time"><span>刚刚</span></p>
 
                 <div class="self">
                     <img class="avatar" src="" />
@@ -125,7 +126,7 @@
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
     <script src="js/xuqijin110.js"></script>
-        
+
 </body>
 
 </html>

@@ -27,10 +27,9 @@ $(function () {
         }
 
         function createSelfMsgDom(msg) {
-            // 添加字段 ctime_ms
-            msg.ctime_ms = msg.content.create_time;
+            
             // 刷新页面
-            // $('.message ul').append(template('singlemsg', msg));
+            $('.message ul').append(template('singlemsg', msg));
             // 清空 input
             $('.action textarea').val('');
             scrollBottom(); // 滚动到底部
@@ -45,7 +44,7 @@ $(function () {
         var flage = true; //判断条件  
         function pulldownRefresh() {
             setTimeout(function () {
-             
+
                 // 第二页： 21/40
                 if (conversationList.length <= pageNumber * loadingCount) { // 获取到第3页的数据就结束上拉操作
                     flage = false;
@@ -63,7 +62,7 @@ $(function () {
                     msgs: msg,
                     global: global
                 }
-                
+
                 // $('.message ul').html(template('test', json));
 
                 mui('#pullrefresh').pullRefresh().endPullupToRefresh(!flage);
@@ -71,7 +70,7 @@ $(function () {
             }, 500);
 
         }
-        
+
         /** =================================== 
                            JIM
         ======================================*/
@@ -81,7 +80,7 @@ $(function () {
         var global = {
             username: "xuqijin110",
             password: '123456',
-            media_id: './logo.png',
+            media_id: 'logo.png',
             nickname: 'supvp.'
         }
         var targetUser = {
@@ -93,7 +92,7 @@ $(function () {
         var userInfo = null;
         var conversationMsg = null; // 离线信息
         init();
-        
+
 
         function register() {
             JIM.register({
@@ -181,7 +180,7 @@ $(function () {
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
-                    
+
                     console.log('--------------')
                     console.log(data);
                     // 获取客服的离线消息
@@ -198,16 +197,16 @@ $(function () {
                         },
                         loadingCount: loadingCount
                     }
-                    conversationList =getMemberAvatarUrl(info);
+                    conversationList = getMemberAvatarUrl(info);
                     var json = {
                         msgs: conversationList,
                         global: global
                     }
                     // 异步操作延迟
-                    setTimeout(function(){
+                    setTimeout(function () {
                         $('.message ul').append(template('test', json));
                         scrollBottom(); // 滚动到底部
-                    },800)
+                    }, 800)
                 });
 
 
@@ -243,17 +242,17 @@ $(function () {
                 console.log('error:' + JSON.stringify(data));
             });
         }
-        function updateSelfAvatar(){
+        function updateSelfAvatar() {
             JIM.updateSelfAvatar({
-                'avatar' : '<formData with image>'
-               }).onSuccess(function(data) {
-                   //data.code 返回码
-                   //data.message 描述
-               }).onFail(function(data) {
-                   //同上
-               });
+                'avatar': '<formData with image>'
+            }).onSuccess(function (data) {
+                //data.code 返回码
+                //data.message 描述
+            }).onFail(function (data) {
+                //同上
+            });
         }
-        
+
         // =============================== 离线消息
 
         // 获取messageList avatar url
@@ -311,7 +310,7 @@ $(function () {
                             }
                         })
                     }
-                   
+
                 }).onFail(function (data) {
                     console.log(data);
                 });
@@ -354,7 +353,7 @@ $(function () {
         // 发送新消息
         function sendSingleMsg(oTarget) {
             var content = $('.action textarea').val();
-            if(content=='')return;
+            if (content == '') return;
             JIM.sendSingleMsg({
                 'target_username': targetUser.across_user,
                 'appkey': targetUser.across_appkey,
@@ -363,10 +362,10 @@ $(function () {
                 'no_notification': false,
                 need_receipt: true
             }).onSuccess(function (data, msg) {
-                createSelfMsgDom(msg)
 
                 console.log(data);
                 console.log(msg);
+                createSelfMsgDom(msg);
             }).onFail(function (data) {
                 console.log('error:' + JSON.stringify(data));
             });

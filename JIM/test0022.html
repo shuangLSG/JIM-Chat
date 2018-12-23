@@ -105,13 +105,13 @@
     <!-- 自己发送的消息 -->
     <script id="singlemsg" type="text/html">
         <li>
+            {{content}}
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 
-                {{include 'room-panel-time' i}}
-
+                <p class="time"><span>刚刚</span></p>
                 <div class="self">
                     <div class="avatar-box">
-                        <img class="avatar" src="{{content.avatarUrl}}" />
+                        <img class="avatar" src="{{avatarUrl}}" />
                     </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
                 </div>
