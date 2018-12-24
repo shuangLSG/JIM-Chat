@@ -158,7 +158,7 @@ export class ChatEffect {
                 }
             }
             return { type: '[chat] get friend list useless' };
-        });
+        }); 
     // 获取messageList 图片消息url
     @Effect()
     private getSourceUrl$: Observable<Action> = this.actions$

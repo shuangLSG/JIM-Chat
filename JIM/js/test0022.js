@@ -27,7 +27,7 @@ $(function () {
             mui('.mui-scroll-wrapper').scroll().scrollToBottom(100);
         }
 
-
+        var hasOffline = 0;
         /**
          * 下拉刷新具体业务实现
          */
@@ -37,7 +37,6 @@ $(function () {
         var flage = true; //判断条件  
         function pulldownRefresh() {
             setTimeout(function () {
-
                 // 第二页： 21/40
                 if (conversationList.length <= pageNumber * loadingCount) { // 获取到第3页的数据就结束上拉操作
                     flage = false;
@@ -73,7 +72,6 @@ $(function () {
         var global = {
             username: "test0022",
             password: '123456',
-            media_id: './logo.png',
             nickname: 'supvp.'
         }
         var targetUser = {
@@ -106,6 +104,7 @@ $(function () {
             }).onSuccess(function (data) {
                 if (!JIM.isLogin()) {
                     login();
+                    hasOffline = 0;
                 }
             }).onFail(function (data) {
                 console.log('error:' + JSON.stringify(data))
@@ -142,9 +141,7 @@ $(function () {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
-            console.log(template('recivemsg', data.messages[0]))
-            $('.message ul').append(template('recivemsg', data.messages[0]));
-            scrollBottom(); // 滚动到底部
+            receiveSingleMsgDom(data.messages[0]);
         }
         // 获取新消息的用户头像url
         function getMsgAvatarUrl(messages) {
@@ -166,7 +163,7 @@ $(function () {
                         if (data.code) {
                             messages.content.avatarUrl = '';
                         } else {
-                            messages.content.avatarUrl = pro3.url;
+                            messages.content.avatarUrl = data.url;
                         }
                     })
                 }
@@ -197,31 +194,11 @@ $(function () {
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
-                    // 获取客服的离线消息
-                    var activeIndex = null;
-                    data.forEach((item, index) => {
-                        if (item.from_username == targetUser.across_user) {
-                            activeIndex = index;
-                        }
-                    });
-                    info = {
-                        messageList: data,
-                        active: {
-                            activeIndex: activeIndex
-                        },
-                        loadingCount: loadingCount
+                    // 限制只触发一次
+                    if (hasOffline === 0) {
+                        hasOffline++;
+                        creatChatPanel(data);
                     }
-                    conversationList = getMemberAvatarUrl(info);
-                    var json = {
-                        msgs: conversationList,
-                        global: global
-                    }
-                    // 异步操作延迟
-                    setTimeout(function () {
-                        $('.message ul').append(template('test', json));
-                        scrollBottom(); // 滚动到底部
-                    }, 800)
-
                 });
 
 
@@ -229,53 +206,165 @@ $(function () {
                     receiveSingleMessage(data);
                 });
 
-
-
-
             })
         }
 
+        // ============================           逻辑
+        function creatChatPanel(data) {
+            var allMsg = getAllMessage(data);
+            // 获取客服的离线消息
+            var activeIndex = null;
+            allMsg.forEach((item, index) => {
+                if (item.from_username == targetUser.across_user) {
+                    activeIndex = index;
+                }
+            });
+            info = {
+                messageList: allMsg,
+                active: {
+                    activeIndex: activeIndex
+                },
+                loadingCount: loadingCount
+            }
+            getMemberAvatarUrl(info, function (result) {
+                conversationList = result;
+            });
+            var json = {
+                msgs: conversationList,
+                global: global
+            }
+            setTimeout(function () {
+                chatPanelDom(json);
+            }, 200)
+        }
         // 发送信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
             if (oTarget.id == 'test-send') {
                 sendSingleMsg();
             }
-        })
+        });
+
+        // 更新个人头像
+        var $input = $('#fileId');
+        var URL = window.URL || window.webkitURL;
+        if (URL) {
+            // 给input添加监听
+            $input.change(function () {
+                var file = document.getElementById('fileId').files[0];
+                // selfAvatarChange(input) {
+                var avatarConfig = getImgObj(file);
+                updateSelfInfo(avatarConfig)
+                // }
+            })
+        }
+        async function updateSelfInfo(self) {
+            var data = await apiService.updateSelfInfo(self.info);
+            if (data.code) {
+                mui.toast(data);
+                if (self.avatar && self.avatar.url) {
+                    updateSelfAvatar(self);
+                }
+            } else {
+                if (self.avatar && self.avatar.url) {
+                    updateSelfAvatar(self);
+                }
+            }
+        }
+        async function updateSelfAvatar(self) {
+            const avatarObj = {
+                avatar: self.avatar.formData
+            };
+            const data = await apiService.updateSelfAvatar(avatarObj);
+            if (data.code) {
+
+            } else {
+                payload = {
+                    avatar: self.avatar,
+                    info: self.info,
+                    loading: false
+                }
+            }
+            console.log(data)
+        }
 
         //获取对话列表
-
         function getConversation() {
             console.log('获取对话列表---------')
 
-            JIM.getConversation().onSuccess(function (data) {
-                data.conversations.forEach((item, index) => {
-                    if (!item.avatarUrl || item.avatarUrl === "") {
-                        item.avatarUrl = defaultAvatar;
+            JIM.getConversation().onSuccess(function (info) {
+                // 加载会话头像
+                for (let conversation of info.conversations) {
+                    if (conversation.avatar && conversation.avatar !== '') {
+                        const urlObj = {
+                            media_id: conversation.avatar
+                        };
+                        JIM.getResource({
+                            ...urlObj
+                        }).onSuccess(function (urlInfo) {
+                            if (!urlInfo.code) {
+                                conversation.avatarUrl = urlInfo.url;
+                            }
+                        })
                     }
-                });
-                chatState = data;
+                }
+                chatState = info;
                 console.log(chatState)
             }).onFail(function (data) {
                 console.log('error:' + JSON.stringify(data));
             });
         }
 
-        function updateSelfAvatar() {
-            JIM.updateSelfAvatar({
-                'avatar': '<formData with image>'
-            }).onSuccess(function (data) {
-                //data.code 返回码
-                //data.message 描述
-            }).onFail(function (data) {
-                //同上
-            });
-        }
+
 
         // =============================== 离线消息
-
+        // 获取所有漫游同步消息
+        function getAllMessage(data) {
+            var newData = data;
+            for (let dataItem of newData) {
+                // 时间显示方式
+                for (let j = 0; j < dataItem.msgs.length; j++) {
+                    if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
+                        if (j === 0) {
+                            dataItem.msgs[j].time_show =
+                                Util.reducerDate(dataItem.msgs[j].ctime_ms);
+                        }
+                        if (j + 1 !== dataItem.msgs.length) {
+                            if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
+                                    dataItem.msgs[j + 1].ctime_ms)) {
+                                dataItem.msgs[j + 1].time_show =
+                                    Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
+                            }
+                        }
+                    }
+                }
+                for (let receiptMsg of dataItem.receipt_msgs) {
+                    for (let message of dataItem.msgs) {
+                        if (receiptMsg.msg_id === message.msg_id) {
+                            message.unread_count = receiptMsg.unread_count;
+                            break;
+                        }
+                    }
+                }
+                if (dataItem.msgs.length > 0) {
+                    if (dataItem.msgs[0].msg_type === 3) {
+                        dataItem.type = 3;
+                        if (dataItem.msgs[0].content.from_id === global.username) {
+                            dataItem.name = dataItem.msgs[0].content.target_id;
+                            dataItem.appkey = dataItem.msgs[0].content.target_appkey;
+                        } else if (dataItem.msgs[0].content.target_id === global.username) {
+                            dataItem.name = dataItem.msgs[0].content.from_id;
+                            dataItem.appkey = dataItem.msgs[0].content.from_appkey;
+                        }
+                    } else if (dataItem.msgs[0].msg_type === 4) {
+                        dataItem.type = 4;
+                    }
+                }
+            }
+            return newData;
+        }
         // 获取messageList avatar url
-        function getMemberAvatarUrl(info) {
+        function getMemberAvatarUrl(info, callback) {
             let userArr = [];
             const msgs = info.messageList[info.active.activeIndex].msgs;
             const end = msgs.length - (info.loadingCount - 1) * pageNumber;
@@ -308,33 +397,25 @@ $(function () {
                 const userObj = {
                     username: user
                 };
-                JIM.getUserInfo({
-                    ...userObj
-                }).onSuccess(function (data) {
-                    console.log(data)
+                apiService.getUserInfo(userObj).then((data) => {
                     if (!data.code && data.user_info.avatar !== '') {
                         const urlObj = {
                             media_id: data.user_info.avatar
                         };
-                        JIM.getResource({
-                            ...urlObj
-                        }).onSuccess(function (data) {
-                            if (!data.code) {
+                        apiService.getResource(urlObj).then((urlInfo) => {
+                            if (!urlInfo.code) {
                                 for (let i = end - 1; i >= end - pageNumber && i >= 0 && end >= 1; i--) {
                                     if (msgs[i].content.from_id === user) {
                                         console.log(i)
-                                        msgs[i].content.avatarUrl = data.url;
+                                        msgs[i].content.avatarUrl = urlInfo.url;
                                     }
                                 }
                             }
                         })
                     }
-
-                }).onFail(function (data) {
-                    console.log(data);
                 });
             }
-            return msgs;
+            (callback && typeof (callback) === "function") && callback(msgs);
         }
 
         // 获取单聊信息
@@ -346,31 +427,33 @@ $(function () {
                 username: username
             }).onSuccess(function (data) {
                 console.log(data);
-                // if (!data.user_info.avatar || data.user_info.avatar === '') {
-                //     messages.content.avatarUrl = '';
-                // } else {
-                //     const urlObj = { media_id: data.user_info.avatar };
-                //     const pro3: any = await this.apiService.getResource(urlObj);
-                //     promises.push(pro3);
-                //     if (pro3.code) {
-                //         messages.content.avatarUrl = '';
-                //     } else {
-                //         messages.content.avatarUrl = pro3.url;
-                //     }
-                // }
-                // var json = {
-                //     msgs: activePerson.msgs,
-                //     user_info: data.user_info,
-                //     global: global
-                // }
-                // $('.message').append(template('test', json));
-                // scrollBottom(); // 滚动到底部
+                if (!data.user_info.avatar || data.user_info.avatar === '') {
+                    messages.content.avatarUrl = '';
+                } else {
+                    const urlObj = {
+                        media_id: data.user_info.avatar
+                    };
+                    JIM.getResource({
+                        ...urlObj
+                    }).onSuccess(function (urlInfo) {
+                        if (!urlInfo.code) {
+                            conversation.avatarUrl = urlInfo.url;
+                        }
+                    })
+                }
+                var json = {
+                    msgs: activePerson.msgs,
+                    user_info: data.user_info,
+                    global: global
+                }
+                $('.message').append(template('test', json));
+                scrollBottom(); // 滚动到底部
             }).onFail(function (data) {
                 console.log(data);
             });
         }
         // 发送新消息
-        async function sendSingleMsg(oTarget) {
+        function sendSingleMsg(oTarget) {
             var content = $('.action textarea').val(),
                 msg = null,
                 data = null;
@@ -383,41 +466,125 @@ $(function () {
                 'no_notification': false,
                 need_receipt: true
             }
-            var msg = await apiService.sendSingleMsg(json);
-            var json = {
-                ...msg,
-                content: { msg_body: { text: content } },
-                msg_type: 'text'
+            apiService.sendSingleMsg(json).then((data)=>{
+                var json = {
+                    ...msg,
+                    content: {
+                        msg_body: {
+                            text: content
+                        }
+                    },
+                    msg_type: 'text'
+                }
+                console.log(json)
+                sendSingleMsgDom(json)
+            });
+            
+        }
+        
+
+
+        //========================================  DOM
+
+        function chatPanelDom(data) {
+            console.log(data)
+            var html = '',
+                global = data.global;
+            $.each(data.msgs, function (index, i) {
+
+                // 文本消息
+                if (i.content && global.username != i.content.from_id && i.msg_type !== 5) {
+                    html += `<li>` + showTimeDom(i);
+                    if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
+                        html += `<div>
+                                    <div class="avatar-box">
+                                        <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:''}" />
+                                    </div>   
+                                    <div class="text"><p>${i.content.msg_body.text}</p></div>
+                                </div>`;
+                    }
+                    html += `</li>`;
+                } else {
+                    html += `<li>` + showTimeDom(i);
+                    if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
+                        html += `<div class="self">
+                                        <div class="avatar-box">
+                                            <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:''}" />
+                                        </div>   
+                                        <div class="text"><p>${i.content.msg_body.text}</p></div>
+                                    </div>`;
+                    }
+                    html += `</li>`;
+                }
+            })
+            $('.message ul').html(html);
+            scrollBottom(); // 滚动到底部
+        }
+        // 接受单聊文本消息
+        function receiveSingleMsgDom(data) {
+            console.log(data)
+            var html = '',
+                content = data.content;
+            // 文本消息
+            html += `<li>` + showTimeDom(data);
+            if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
+                html += `<div>
+                            <div class="avatar-box">
+                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                            </div>   
+                            <div class="text"><p>${content.msg_body.text}</p></div>
+                        </div>`;
             }
-            console.log(json)
-            $('.message ul').append(template('singlemsg', json));
-                // 清空 input
-                $('.action textarea').val('');
-                scrollBottom(); // 滚动到底部
-
-
-            // JIM.sendSingleMsg({
-            //     ...json
-            // }).onSuccess(function (data, msg) {
-            //     console.log(data);
-            //     console.log(msg);
-            //     var json = {
-            //         ...msg,
-            //         avatarUrl: global.media_id
-            //     }
-            //     $('.message ul').append(template('singlemsg', json));
-            //     // 清空 input
-            //     $('.action textarea').val('');
-            //     scrollBottom(); // 滚动到底部
-
-            // }).onFail(function (data) {
-            //     console.log('error:' + JSON.stringify(data));
-            // });
-            // return {
-            //     ...msg,
-            //     ...data
-            // };
+            html += `</li>`;
+            $('.message ul').append(html);
+            scrollBottom(); // 滚动到底部
+        }
+        // 发送单聊消息
+        function sendSingleMsgDom(data) {
+            console.log(data)
+            var html = '',
+                content = data.content;
+            // 文本消息
+            html += `<li>` + showTimeDom(data);
+            if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
+                html += `<div class="self">
+                            <div class="avatar-box">
+                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                            </div>   
+                            <div class="text"><p>${content.msg_body.text}</p></div>
+                        </div>`;
+            }
+            html += `</li>`;
+            console.log(html);
+            $('.message ul').append(html);
+            // 清空 input
+            $('.action textarea').val('');
+            scrollBottom(); // 滚动到底部
+        }
+        function showTimeDom(data) {
+            var html = '<p class="time">',
+                ctime_ms = data.ctime_ms;
+            switch (data.time_show) {
+                case 'year':
+                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    break;
+                case 'month':
+                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    break;
+                case 'day':
+                    html += `<span>${dateFormat(ctime_ms,'dd hh:mm')}</span>`
+                    break;
+                case 'the day before':
+                    html += `<span>前天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    break;
+                case 'yesterday':
+                    html += `<span>昨天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    break;
+                case 'today':
+                    html += `<span>${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    break;
+            }
+            return html + '</p>';
         }
     })(mui, jQuery)
 })
-

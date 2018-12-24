@@ -14,6 +14,18 @@ const apiService = {
     downloadThumbUserAvatar:function (myAvatar = {}, success, error, timeout) {
         return this.callback(JIM.downloadThumbUserAvatar(myAvatar), success, error, timeout);
     },
+    // 获取资源地址
+    getResource:function (resource = {}, success, error, timeout) {
+        return this.callback(JIM.getResource(resource), success, error, timeout);
+    },
+    // 更新自己的信息
+    updateSelfInfo:function (self = {}, success, error, timeout) {
+        return this.callback(JIM.updateSelfInfo(self), success, error, timeout);
+    },
+    // 更新自己的头像
+    updateSelfAvatar:function (selfAvatar = {}, success, error, timeout) {
+        return this.callback(JIM.updateSelfAvatar(selfAvatar), success, error, timeout);
+    },
     callback :function(obj, ...args){
         return new Promise((resolve) => {
             if (obj && obj.onSuccess) {
