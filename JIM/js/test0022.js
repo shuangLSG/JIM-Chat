@@ -141,6 +141,7 @@ $(function () {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
+            ChatStore.conversation=data;
             receiveSingleMsgDom(data.messages[0]);
         }
         // 获取新消息的用户头像url
@@ -362,7 +363,7 @@ $(function () {
                 }
             }
             return newData;
-        }
+        } 
         // 获取messageList avatar url
         function getMemberAvatarUrl(info, callback) {
             let userArr = [];

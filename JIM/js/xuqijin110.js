@@ -78,7 +78,7 @@ $(function () {
             // across_appkey: '4f7aef34fb361292c566a1cd'
         }
 
-        var appkey = '4f7aef34fb361292c566a1cd';
+        var appkey = '5244aea56672ae685d799270';
         var userInfo = null;
         var conversationMsg = null; // 离线信息
         init();
@@ -96,7 +96,7 @@ $(function () {
 
         function init() {
             JIM.init({
-                "appkey": '4f7aef34fb361292c566a1cd',
+                "appkey": appkey,
                 "random_str": "404",
                 "signature": '7db047a67a9d7293850ac69d14cc82bf',
                 "timestamp": 1507882399401,

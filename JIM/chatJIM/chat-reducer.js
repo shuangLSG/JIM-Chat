@@ -122,7 +122,7 @@ function addMessage(state= ChatStore, payload) {
             }
         }
     }
-}
+} 
 // 添加自己发的消息到消息面板
 function addMyselfMesssge(state= ChatStore, payload) {
     const result = state.conversation.filter((item) => {
