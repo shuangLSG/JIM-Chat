@@ -1,5 +1,6 @@
 $(function () {
     (function (mui, $) {
+
         var conversationList = null,
             chatState = null,
             defaultAvatar = 'logo.png';
@@ -60,34 +61,37 @@ $(function () {
                 mui('#pullrefresh').pullRefresh().endPullupToRefresh(!flage);
 
             }, 500);
-
         }
 
+        var ChatStore = {
+                conversation: []
+            },
+            userInfo = {
+                avatarUrl: ""
+            }
         /** =================================== 
                            JIM
         ======================================*/
         window.JIM = new JMessage({
-            debug: false
+            debug: true
         });
         var global = {
-            username: "test0022",
+            username: "xuqijin110",
             password: '123456',
-            nickname: 'supvp.'
         }
         var targetUser = {
-            across_user: 'xuqijin110',
-            // across_appkey: '4f7aef34fb361292c566a1cd'
+            across_user: 'lsg222',
         }
 
-        var appkey = '5244aea56672ae685d799270';
-        var userInfo = null;
+        var appkey = '4f7aef34fb361292c566a1cd';
         var conversationMsg = null; // 离线信息
         init();
 
 
         function register() {
             JIM.register({
-                ...global,
+                ...global
+
             }).onSuccess(function (data) {
                 console.log('注册 success:----------------------------------')
                 console.log(data);
@@ -95,6 +99,7 @@ $(function () {
         }
 
         function init() {
+            var time = new Date().getTime();
             JIM.init({
                 "appkey": '4f7aef34fb361292c566a1cd',
                 "random_str": "404",
@@ -102,31 +107,14 @@ $(function () {
                 "timestamp": 1507882399401,
                 "flag": 1
             }).onSuccess(function (data) {
-                if (!JIM.isLogin()) {
-                    login();
-                    hasOffline = 0;
-                }
+                login();
+                hasOffline = 0;
             }).onFail(function (data) {
                 console.log('error:' + JSON.stringify(data))
             });
         }
 
 
-        // 收到新消息
-        function receiveNewMessage(data) {
-            var msgs = null;
-            if (data.messages[0].content.from_id === global.username) {
-                isMySelf = true;
-            } else {
-                msgs = data;
-                isMySelf = false;
-            }
-            return msgs;
-        }
-        // 同步自己发送的消息
-        function syncReceiveMessage() {
-
-        }
         // 接收到单聊新消息
         function receiveSingleMessage(data) {
             console.log(data)
@@ -141,7 +129,6 @@ $(function () {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
-            ChatStore.conversation=data;
             receiveSingleMsgDom(data.messages[0]);
         }
         // 获取新消息的用户头像url
@@ -193,6 +180,7 @@ $(function () {
                 // 获取会话列表
                 getConversation();
 
+
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
                     // 限制只触发一次
@@ -202,6 +190,7 @@ $(function () {
                     }
                 });
 
+                setSelfAvatar();
 
                 JIM.onMsgReceive(function (data) {
                     receiveSingleMessage(data);
@@ -211,8 +200,8 @@ $(function () {
         }
 
         // ============================           逻辑
-        function creatChatPanel(data) {
-            var allMsg = getAllMessage(data);
+        async function creatChatPanel(data) {
+            var allMsg = await getAllMessage(data);
             // 获取客服的离线消息
             var activeIndex = null;
             allMsg.forEach((item, index) => {
@@ -223,20 +212,18 @@ $(function () {
             info = {
                 messageList: allMsg,
                 active: {
-                    activeIndex: activeIndex
+                    activeIndex: activeIndex||0 // 自己没发过
                 },
                 loadingCount: loadingCount
             }
-            getMemberAvatarUrl(info, function (result) {
-                conversationList = result;
-            });
+            const conversationList= await getMemberAvatarUrl(info);
             var json = {
                 msgs: conversationList,
                 global: global
             }
             setTimeout(function () {
                 chatPanelDom(json);
-            }, 1000)
+            }, 200)
         }
         // 发送信息
         document.querySelector('.action').addEventListener('tap', function (e) {
@@ -252,9 +239,12 @@ $(function () {
         if (URL) {
             // 给input添加监听
             $input.change(function () {
+
                 var file = document.getElementById('fileId').files[0];
+
                 // selfAvatarChange(input) {
                 var avatarConfig = getImgObj(file);
+                console.log(avatarConfig)
                 updateSelfInfo(avatarConfig)
                 // }
             })
@@ -289,11 +279,26 @@ $(function () {
             console.log(data)
         }
 
+        async function setSelfAvatar(callback) {
+            const userObj = {
+                username: global.username
+            };
+            var data = await apiService.getUserInfo(userObj);
+            if (!data.code && data.user_info.avatar !== '') {
+                const urlObj = {
+                    media_id: data.user_info.avatar
+                };
+                var urlInfo = await apiService.getResource(urlObj);
+                if (!urlInfo.code) {
+                    userInfo.avatarUrl = urlInfo.url;
+                }
+            }
+
+        }
+
         //获取对话列表
         function getConversation() {
-            console.log('获取对话列表---------')
-
-            JIM.getConversation().onSuccess(function (info) {
+            apiService.getConversation().then((info) => {
                 // 加载会话头像
                 for (let conversation of info.conversations) {
                     if (conversation.avatar && conversation.avatar !== '') {
@@ -311,16 +316,14 @@ $(function () {
                 }
                 chatState = info;
                 console.log(chatState)
-            }).onFail(function (data) {
-                console.log('error:' + JSON.stringify(data));
-            });
+            })
         }
 
 
 
         // =============================== 离线消息
         // 获取所有漫游同步消息
-        function getAllMessage(data) {
+        async function getAllMessage(data) {
             var newData = data;
             for (let dataItem of newData) {
                 // 时间显示方式
@@ -362,32 +365,29 @@ $(function () {
                     }
                 }
             }
-            return newData;
-        } 
+            const info = await apiService.getConversation();
+            ChatStore.conversation = info.conversations;
+            // 加载会话头像
+            for (let conversation of info.conversations) {
+                if (conversation.avatar && conversation.avatar !== '') {
+                    const urlObj = {
+                        media_id: conversation.avatar
+                    };
+                    apiService.getResource(urlObj).then((urlInfo) => {
+                        if (!urlInfo.code) {
+                            conversation.avatarUrl = urlInfo.url;
+                        }
+                    });
+                }
+            }
+            return newData
+        }
         // 获取messageList avatar url
-        function getMemberAvatarUrl(info, callback) {
+        async function getMemberAvatarUrl(info) {
             let userArr = [];
             const msgs = info.messageList[info.active.activeIndex].msgs;
-            const end = msgs.length - (info.loadingCount - 1) * pageNumber;
-            for (let i = end - 1; i >= end - pageNumber && i >= 0 && end >= 1; i--) {
-                // 如果是已经加载过头像的用户
-                if (info.loadingCount !== 1) {
-                    let flag = false;
-                    for (let j = end; j < msgs.length; j++) {
-                        if (msgs[i].content.from_id === msgs[j].content.from_id) {
-                            if (msgs[j].content.avatarUrl) {
-                                msgs[i].content.avatarUrl = msgs[j].content.avatarUrl;
-                                flag = true;
-                            }
-                            break;
-                        }
-                    }
-                    if (flag) {
-                        continue;
-                    }
-                }
+            for (let i = 0; i < msgs.length; i++) {
                 msgs[i].content.avatarUrl = '';
-                // 第一次加载头像的用户
                 if (msgs[i].content.from_id !== global.username &&
                     userArr.indexOf(msgs[i].content.from_id) < 0) {
                     userArr.push(msgs[i].content.from_id);
@@ -405,9 +405,8 @@ $(function () {
                         };
                         apiService.getResource(urlObj).then((urlInfo) => {
                             if (!urlInfo.code) {
-                                for (let i = end - 1; i >= end - pageNumber && i >= 0 && end >= 1; i--) {
+                                for (let i = 0; i < msgs.length; i++) {
                                     if (msgs[i].content.from_id === user) {
-                                        console.log(i)
                                         msgs[i].content.avatarUrl = urlInfo.url;
                                     }
                                 }
@@ -416,7 +415,7 @@ $(function () {
                     }
                 });
             }
-            (callback && typeof (callback) === "function") && callback(msgs);
+            return msgs;
         }
 
         // 获取单聊信息
@@ -467,22 +466,25 @@ $(function () {
                 'no_notification': false,
                 need_receipt: true
             }
-            apiService.sendSingleMsg(json).then((data)=>{
+
+            apiService.sendSingleMsg(json).then((data) => {
                 var json = {
                     ...msg,
                     content: {
                         msg_body: {
                             text: content
-                        }
+                        },
+                        avatarUrl: userInfo.avatarUrl
                     },
                     msg_type: 'text'
                 }
-                console.log(json)
-                sendSingleMsgDom(json)
+                setTimeout(function () {
+                    sendSingleMsgDom(json)
+                }, 200)
             });
-            
+
         }
-        
+
 
 
         //========================================  DOM
@@ -562,6 +564,7 @@ $(function () {
             $('.action textarea').val('');
             scrollBottom(); // 滚动到底部
         }
+
         function showTimeDom(data) {
             var html = '<p class="time">',
                 ctime_ms = data.ctime_ms;

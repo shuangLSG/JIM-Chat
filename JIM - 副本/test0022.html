@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>test0022</title>
+    <script src="data.js"></script>
+    <link rel="stylesheet" href="css/mui.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+
+    <style>
+        body {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
+        }
+        .mui-scroll-wrapper{
+            padding-bottom: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
+        <div class="mui-scroll message">
+                <ul></ul>
+        </div>
+    </div>
+    <footer class="mui-bar mui-bar-tab">
+        <div class="action">
+            <textarea class="margin-l-26"></textarea>
+            <span class="mui-icon mui-icon-plus margin-h-26"></span>
+            <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
+        </div>
+        <!-- <form id='myForm'>
+            <input type='text' name='usrName' value='kevin'/>
+            <input type='file' id='fileId'/>
+         </form> -->
+    </footer>
+    <!-- 时间 -->
+    <script id="room-panel-time" type="text/html">
+        <p class="time">  
+            {{if showTime(ctime_ms)==='year'}}
+            <span>{{ ctime_ms |dateFormat 'yyyy-MM-dd hh:mm'}}</span>
+            {{else if showTime(ctime_ms)==='month'}}
+            <span>{{ ctime_ms |dateFormat 'MM-dd hh:mm'}}</span>
+            {{else if showTime(ctime_ms)==='day'}}
+            <span>{{ ctime_ms |dateFormat 'dd hh:mm'}}</span>
+            {{else if showTime(ctime_ms)==='the day before'}}
+            <span>前天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
+            {{else if showTime(ctime_ms)==='yesterday'}}
+            <span>昨天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
+            {{else if showTime(ctime_ms)==='today'}}
+            <span>{{ ctime_ms |dateFormat 'hh:mm'}}</span>
+            <!-- {{else if showTime(ctime_ms)==='just'}}
+            <span>刚刚</span> -->
+            {{/if}}
+        </p>
+    </script>
+    <script id="test" type="text/html">
+            {{each msgs i index}}
+                {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div>
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div>   
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
+                {{else}}
+                    <li>
+                        {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
+                            {{include 'room-panel-time' i}}
+                            <div class="self">
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
+                                </div> 
+                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                            </div>
+                        {{/if}}
+                    </li>
+                {{/if}}
+            {{/each}}
+    </script>
+    
+    <!-- 别人发送的消息 -->
+    <script id="recivemsg" type="text/html">
+        <li>{{content}}
+            {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
+                {{include 'room-panel-time' i}}
+                <div >
+                    <div class="avatar-box">
+                        <img class="avatar" src="{{content.avatarUrl}}" />
+                    </div> 
+                    <div class="text"><p>{{content.msg_body.text}}</p></div>
+                </div>
+            {{/if}}
+        </li>
+    </script>
+    <!-- 自己发送的消息 -->
+    <script id="singlemsg" type="text/html">
+        <li>
+            {{content}}
+            {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
+                
+                <p class="time"><span>刚刚</span></p>
+                <div class="self">
+                    <div class="avatar-box">
+                        <img class="avatar" src="{{avatarUrl}}" />
+                    </div> 
+                    <div class="text"><p>{{content.msg_body.text}}</p></div>
+                </div>
+            {{/if}}
+        </li>
+    </script>
+
+    <script src="js/rem.js"></script>
+    <script src="js/common.js"></script>
+
+    <script src="js/mui.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
+    <script src="chatJIM/services/api.service.js"></script>
+    <script src="chatJIM/util.js"></script>
+    <script src="chatJIM/chat-effect.js"></script>
+    
+    <script src="chatJIM/chat-reducer.js"></script>
+    <script src="js/test0022.js"></script>       
+</body>
+
+</html>

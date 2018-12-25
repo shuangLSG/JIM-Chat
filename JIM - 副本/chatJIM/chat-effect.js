@@ -2,28 +2,9 @@
 function getMemberAvatarUrl(info, callback) {
     let userArr = [];
     const msgs = info.messageList[info.active.activeIndex].msgs;
-    const end = msgs.length - (info.loadingCount - 1) * pageNumber;
-    ChatStore.chatAction =({
-        type: 'getAllMessageSuccess',
-        payload: info.messageList
-    });
-    for (let i = end - 1; i >= end - pageNumber && i >= 0 && end >= 1; i--) {
-        // 如果是已经加载过头像的用户
-        if (info.loadingCount !== 1) {
-            let flag = false;
-            for (let j = end; j < msgs.length; j++) {
-                if (msgs[i].content.from_id === msgs[j].content.from_id) {
-                    if (msgs[j].content.avatarUrl) {
-                        msgs[i].content.avatarUrl = msgs[j].content.avatarUrl;
-                        flag = true;
-                    }
-                    break;
-                }
-            }
-            if (flag) {
-                continue;
-            }
-        }
+   
+    for (let i =0; i <=msgs.length; i++) {
+       
         msgs[i].content.avatarUrl = '';
         // 第一次加载头像的用户
         if (msgs[i].content.from_id !== global.username &&
