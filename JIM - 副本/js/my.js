@@ -1,23 +1,13 @@
 $(function () {
     (function (mui, $) {
 
-        var conversationList = null,
-            chatState = null,
+        var chatState = null,
             defaultAvatar = 'logo.png';
 
 
         /** ============== mui ==================*/
         mui.init({
             swipeBack: false, //启用右滑关闭功能
-            pullRefresh: {
-                container: '#pullrefresh',
-                down: {
-                    contentdown: "下拉可以刷新", //可选，在下拉可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentover: "释放立即刷新", //可选，在释放可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentrefresh: "正在刷新...", //可选，正在刷新状态时，下拉刷新控件上显示的标题内容
-                    // callback: pulldownRefresh, // ajax 具体操作
-                }
-            }
         });
         var scroll = mui('.mui-scroll-wrapper').scroll({
             bounce: false //是否启用回弹
@@ -29,43 +19,9 @@ $(function () {
         }
 
         var hasOffline = 0;
-        /**
-         * 下拉刷新具体业务实现
-         */
-        // 消息列表中滚动加载的每页消息的条数
-        var pageNumber = 20,
-            loadingCount = 1;
-        var flage = true; //判断条件  
-        function pulldownRefresh() {
-            setTimeout(function () {
-                // 第二页： 21/40
-                if (conversationList.length <= pageNumber * loadingCount) { // 获取到第3页的数据就结束上拉操作
-                    flage = false;
-                    msg = conversationList;
-                } else {
-                    // 48/40
-                    flage = true;
-                    loadingCount++;
-                    console.log(conversationList.length - pageNumber * loadingCount)
-                    msg = conversationList.slice(conversationList.length - pageNumber * loadingCount);
-                    console.log(msg)
-                }
-
-                var json = {
-                    msgs: msg,
-                    global: global
-                }
-
-                // $('.message ul').html(template('test', json));
-
-                mui('#pullrefresh').pullRefresh().endPullupToRefresh(!flage);
-
-            }, 500);
-        }
-
         var ChatStore = {
-                conversation: []
-            },
+            conversation: []
+        },
             userInfo = {
                 avatarUrl: ""
             }
@@ -84,11 +40,9 @@ $(function () {
         var targetUser = {
             across_user: 'test0022',
         }
-
         var appkey = '5244aea56672ae685d799270';
-        var conversationMsg = null; // 离线信息
-        init();
 
+        init();
 
         function register() {
             JIM.register({
@@ -215,25 +169,41 @@ $(function () {
                 messageList: allMsg,
                 active: {
                     activeIndex: activeIndex || 0
-                },
-                loadingCount: loadingCount
+                }
             }
             getMemberAvatarUrl(info, function (result) {
-                conversationList = result;
+                var json = {
+                    msgs: result,
+                    global: global
+                }
+                setTimeout(function () {
+                    chatPanelDom(json);
+                }, 400)
             });
-            var json = {
-                msgs: conversationList,
-                global: global
-            }
-            setTimeout(function () {
-                chatPanelDom(json);
-            }, 1000)
+
         }
         // 发送信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
             if (oTarget.id == 'test-send') {
-                sendSingleMsg();
+                sendSingleMsg().then((data)=>{
+                    var content = $('.action textarea').val();
+                    var json = {
+                        ...data,
+                        content: {
+                            msg_body: {
+                                text: content
+                            },
+                            avatarUrl: userInfo.avatarUrl
+                        },
+                        msg_type: 'text'
+                    }
+                    return json;
+                }).then((json)=>{
+                    setTimeout(function(){
+                        sendSingleMsgDom(json);
+                    },1000)
+                });
             }
         });
 
@@ -278,7 +248,7 @@ $(function () {
                         }
                         if (j + 1 !== dataItem.msgs.length) {
                             if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                    dataItem.msgs[j + 1].ctime_ms)) {
+                                dataItem.msgs[j + 1].ctime_ms)) {
                                 dataItem.msgs[j + 1].time_show =
                                     Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                             }
@@ -399,32 +369,22 @@ $(function () {
             });
         }
         // 发送新消息
-        async function sendSingleMsg(oTarget) {
-            var content = $('.action textarea').val();
-            if (content == '') return;
-            var json = {
-                'target_username': targetUser.across_user,
-                'appkey': targetUser.across_appkey,
-                'content': content,
-                'no_offline': false,
-                'no_notification': false,
-                need_receipt: true
-            }
-
-            const msg = await apiService.sendSingleMsg(json)
-            var json = {
-                ...msg,
-                content: {
-                    msg_body: {
-                        text: content
-                    },
-                    avatarUrl: userInfo.avatarUrl
-                },
-                msg_type: 'text'
-            }
-            setTimeout(function(){
-                sendSingleMsgDom(json)
-            },1000)
+        function sendSingleMsg(oTarget) {
+            return new Promise((resolve) => {
+                var content = $('.action textarea').val();
+                if (content == '') return;
+                var json = {
+                    'target_username': targetUser.across_user,
+                    'appkey': targetUser.across_appkey,
+                    'content': content,
+                    'no_offline': false,
+                    'no_notification': false,
+                    need_receipt: true
+                }
+                apiService.sendSingleMsg(json).then(function(data){                   
+                    resolve(data);
+                })
+            });
         }
 
 
@@ -512,7 +472,7 @@ $(function () {
                     if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
                         html += `<div>
                                     <div class="avatar-box">
-                                        <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:'logo.png'}" />
+                                        <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
                                     </div>   
                                     <div class="text"><p>${i.content.msg_body.text}</p></div>
                                 </div>`;
@@ -523,7 +483,7 @@ $(function () {
                     if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
                         html += `<div class="self">
                                         <div class="avatar-box">
-                                            <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:'logo.png'}" />
+                                            <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
                                         </div>   
                                         <div class="text"><p>${i.content.msg_body.text}</p></div>
                                     </div>`;
@@ -544,7 +504,7 @@ $(function () {
             if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
                 html += `<div>
                             <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                                <img class="avatar" src="${content.avatarUrl ? content.avatarUrl : 'logo.png'}" />
                             </div>   
                             <div class="text"><p>${content.msg_body.text}</p></div>
                         </div>`;
@@ -563,7 +523,7 @@ $(function () {
             if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
                 html += `<div class="self">
                             <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                                <img class="avatar" src="${content.avatarUrl ? content.avatarUrl : 'logo.png'}" />
                             </div>   
                             <div class="text"><p>${content.msg_body.text}</p></div>
                         </div>`;
@@ -581,22 +541,22 @@ $(function () {
                 ctime_ms = data.ctime_ms;
             switch (data.time_show) {
                 case 'year':
-                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
                     break;
                 case 'month':
-                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
                     break;
                 case 'day':
-                    html += `<span>${dateFormat(ctime_ms,'dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'dd hh:mm')}</span>`
                     break;
                 case 'the day before':
-                    html += `<span>前天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>前天${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
                 case 'yesterday':
-                    html += `<span>昨天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>昨天${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
                 case 'today':
-                    html += `<span>${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
             }
             return html + '</p>';

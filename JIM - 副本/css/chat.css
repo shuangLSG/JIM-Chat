@@ -41,7 +41,9 @@ textarea {
 .message li {
     margin-bottom: 0.3rem;
 }
-
+.message li p+div{
+    overflow: hidden;
+}
 .message .time {
     margin: 0.2rem 0;
     text-align: center;
