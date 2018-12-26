@@ -1,23 +1,13 @@
 $(function () {
     (function (mui, $) {
 
-        var conversationList = null,
-            chatState = null,
+        var chatState = null,
             defaultAvatar = 'logo.png';
 
 
         /** ============== mui ==================*/
         mui.init({
             swipeBack: false, //启用右滑关闭功能
-            pullRefresh: {
-                container: '#pullrefresh',
-                down: {
-                    contentdown: "下拉可以刷新", //可选，在下拉可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentover: "释放立即刷新", //可选，在释放可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentrefresh: "正在刷新...", //可选，正在刷新状态时，下拉刷新控件上显示的标题内容
-                    // callback: pulldownRefresh, // ajax 具体操作
-                }
-            }
         });
         var scroll = mui('.mui-scroll-wrapper').scroll({
             bounce: false //是否启用回弹
@@ -29,40 +19,6 @@ $(function () {
         }
 
         var hasOffline = 0;
-        /**
-         * 下拉刷新具体业务实现
-         */
-        // 消息列表中滚动加载的每页消息的条数
-        var pageNumber = 20,
-            loadingCount = 1;
-        var flage = true; //判断条件  
-        function pulldownRefresh() {
-            setTimeout(function () {
-                // 第二页： 21/40
-                if (conversationList.length <= pageNumber * loadingCount) { // 获取到第3页的数据就结束上拉操作
-                    flage = false;
-                    msg = conversationList;
-                } else {
-                    // 48/40
-                    flage = true;
-                    loadingCount++;
-                    console.log(conversationList.length - pageNumber * loadingCount)
-                    msg = conversationList.slice(conversationList.length - pageNumber * loadingCount);
-                    console.log(msg)
-                }
-
-                var json = {
-                    msgs: msg,
-                    global: global
-                }
-
-                // $('.message ul').html(template('test', json));
-
-                mui('#pullrefresh').pullRefresh().endPullupToRefresh(!flage);
-
-            }, 500);
-        }
-
         var ChatStore = {
                 conversation: []
             },
@@ -73,7 +29,7 @@ $(function () {
                            JIM
         ======================================*/
         window.JIM = new JMessage({
-            debug: true
+            debug: false
         });
         var global = {
             username: "test0022",
@@ -84,11 +40,9 @@ $(function () {
         var targetUser = {
             across_user: 'lsg222',
         }
-
         var appkey = '5244aea56672ae685d799270';
-        var conversationMsg = null; // 离线信息
-        init();
 
+        init();
 
         function register() {
             JIM.register({
@@ -202,101 +156,58 @@ $(function () {
         }
 
         // ============================           逻辑
-        async function creatChatPanel(data) {
-            var allMsg = await getAllMessage(data);
-            // 获取客服的离线消息
-            var activeIndex = null;
-            allMsg.forEach((item, index) => {
-                if (item.from_username == targetUser.across_user) {
-                    activeIndex = index;
+        function creatChatPanel(data) {
+            getAllMessage(data).then(data => {
+                // 获取客服的离线消息
+                var activeIndex = null;
+                data.forEach((item, index) => {
+                    if (item.from_username == targetUser.across_user) {
+                        activeIndex = index;
+                    }
+                });
+                info = {
+                    messageList: data,
+                    active: {
+                        activeIndex: activeIndex || 0
+                    }
                 }
+                return info;
+            }).then(info => {
+                getMemberAvatarUrl(info).then(msgs => {
+                    const json = {
+                        msgs: msgs,
+                        global: global
+                    }
+                    chatPanelDom(json);
+                })
             });
-            info = {
-                messageList: allMsg,
-                active: {
-                    activeIndex: activeIndex || 0
-                },
-                loadingCount: loadingCount
-            }
-            getMemberAvatarUrl(info, function (result) {
-                conversationList = result;
-            });
-            var json = {
-                msgs: conversationList,
-                global: global
-            }
-            setTimeout(function () {
-                chatPanelDom(json);
-            }, 1000)
         }
         // 发送信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
             if (oTarget.id == 'test-send') {
-                sendSingleMsg();
+                sendSingleMsg().then(info => {
+                    sendSingleMsgDom(info);
+                })
             }
         });
-
-        // 更新个人头像
-        var $input = $('#fileId');
-        var URL = window.URL || window.webkitURL;
-        if (URL) {
-            // 给input添加监听
-            $input.change(function () {
-
-                var file = document.getElementById('fileId').files[0];
-                let fd = new FormData();
-                fd.append(file.name, file);
-                var avatarConfig = {
-                    avatar: {
-                        formData: fd,
-                        url:'logo.png'
-                    },
-                    info:{
-                        nickname:'lsl333'
-                    }
-                }
-                updateSelfInfo(avatarConfig)
-            })
-        }
-        async function updateSelfInfo(self) {
-            var data = await apiService.updateSelfInfo(self.info);
-            if (data.code) {
-                mui.toast(data);
-                if (self.avatar && self.avatar.url) {
-                    updateSelfAvatar(self);
-                }
-            } else {
-                if (self.avatar && self.avatar.url) {
-                    updateSelfAvatar(self);
-                }
+        // 发送信息
+        document.querySelector('#sendPic2').addEventListener('tap', function () {
+            // 为了防止首次选择了文件，第二次选择文件的时候点击取消按钮时触发change事件的报错
+            if (!this.files[0]) {
+                return;
             }
-        }
-        async function updateSelfAvatar(self) {
-            const avatarObj = {
-                avatar: self.avatar.formData
-            };
-            const data = await apiService.updateSelfAvatar(avatarObj);
-            if (!data.code) {
-                setSelfAvatar();
+            var oimg = document.querySelector('#sendPic2');
+            let img = Util.getFileFormData(oimg);
+            const emit = {
+                img: img,
+                type: "send"
             }
-        }
+            sendPicAction(oimg, emit);
+            // this.blur();
+            // this.value = '';
+        });
 
-        async function setSelfAvatar() {
-            const userObj = {
-                username: global.username
-            };
-            var data = await apiService.getUserInfo(userObj);
-            if (!data.code && data.user_info.avatar !== '') {
-                const urlObj = {
-                    media_id: data.user_info.avatar
-                };
-                var urlInfo = await apiService.getResource(urlObj);
-                if (!urlInfo.code) {
-                    userInfo.avatarUrl = urlInfo.url;
-                }
-            }
-        }
 
         //获取对话列表
         function getConversation() {
@@ -326,8 +237,8 @@ $(function () {
         // =============================== 离线消息
         // 获取所有漫游同步消息
         async function getAllMessage(data) {
-            var newData = data;
-            for (let dataItem of newData) {
+
+            for (let dataItem of data) {
                 // 时间显示方式
                 for (let j = 0; j < dataItem.msgs.length; j++) {
                     if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
@@ -358,7 +269,7 @@ $(function () {
                         if (dataItem.msgs[0].content.from_id === global.username) {
                             dataItem.name = dataItem.msgs[0].content.target_id;
                             dataItem.appkey = dataItem.msgs[0].content.target_appkey;
-                            
+
                         } else if (dataItem.msgs[0].content.target_id === global.username) {
                             dataItem.name = dataItem.msgs[0].content.from_id;
                             dataItem.appkey = dataItem.msgs[0].content.from_appkey;
@@ -383,44 +294,48 @@ $(function () {
                     });
                 }
             }
-            return newData
+            return data;
         }
         // 获取messageList avatar url
-        function getMemberAvatarUrl(info, callback) {
-            let userArr = [];
-            const msgs = info.messageList[info.active.activeIndex].msgs;
-            for (let i = 0; i < msgs.length; i++) {
-                msgs[i].content.avatarUrl = '';
-                if (msgs[i].content.from_id !== global.username &&
-                    userArr.indexOf(msgs[i].content.from_id) < 0) {
-                    userArr.push(msgs[i].content.from_id);
+        function getMemberAvatarUrl(info) {
+            return new Promise((resolve) => {
+                let userArr = [];
+                const msgs = info.messageList[info.active.activeIndex].msgs;
+                for (let i = 0; i < msgs.length; i++) {
+                    msgs[i].content.avatarUrl = '';
+                    if (msgs[i].content.from_id !== global.username &&
+                        userArr.indexOf(msgs[i].content.from_id) < 0) {
+                        userArr.push(msgs[i].content.from_id);
+                    }
                 }
-            }
-            // 添加自己，设置头像
-            userArr.push(global.username);
+                // 添加自己，设置头像
+                userArr.push(global.username);
 
-            for (let user of userArr) {
-                const userObj = {
-                    username: user
-                };
-                apiService.getUserInfo(userObj).then((data) => {
-                    if (!data.code && data.user_info.avatar !== '') {
-                        const urlObj = {
-                            media_id: data.user_info.avatar
-                        };
-                        apiService.getResource(urlObj).then((urlInfo) => {
-                            if (!urlInfo.code) {
-                                for (let i = 0; i < msgs.length; i++) {
-                                    if (msgs[i].content.from_id === user) {
-                                        msgs[i].content.avatarUrl = urlInfo.url;
+                for (let user of userArr) {
+                    const userObj = {
+                        username: user
+                    };
+                    apiService.getUserInfo(userObj).then((data) => {
+                        if (!data.code && data.user_info.avatar !== '') {
+                            const urlObj = {
+                                media_id: data.user_info.avatar
+                            };
+                            apiService.getResource(urlObj).then((urlInfo) => {
+                                if (!urlInfo.code) {
+                                    for (let i = 0; i < msgs.length; i++) {
+                                        if (msgs[i].content.from_id === user) {
+                                            msgs[i].content.avatarUrl = urlInfo.url;
+                                        }
                                     }
                                 }
-                            }
-                        })
-                    }
-                });
-            }
-            (callback && typeof (callback) === "function") && callback(msgs);
+                            })
+                        }
+                    });
+                }
+                setTimeout(function () {
+                    resolve(msgs);
+                }, 400)
+            })
         }
 
         // 获取单聊信息
@@ -459,36 +374,159 @@ $(function () {
         }
         // 发送新消息
         function sendSingleMsg(oTarget) {
-            var content = $('.action textarea').val(),
-                msg = null,
-                data = null;
-            if (content == '') return;
-            var json = {
-                'target_username': targetUser.across_user,
-                'appkey': targetUser.across_appkey,
-                'content': content,
-                'no_offline': false,
-                'no_notification': false,
-                need_receipt: true
-            }
-
-            apiService.sendSingleMsg(json).then((data) => {
-                var json = {
-                    ...msg,
-                    content: {
-                        msg_body: {
-                            text: content
-                        },
-                        avatarUrl: userInfo.avatarUrl
-                    },
-                    msg_type: 'text'
-                }
-                setTimeout(function () {
-                    sendSingleMsgDom(json)
-                }, 1200)
+            return new Promise((resolve) => {
+                var content = $('.action textarea').val();
+                if (content == '') return;
+                JIM.sendSingleMsg({
+                    'target_username': targetUser.across_user,
+                    'appkey': targetUser.across_appkey,
+                    'content': content,
+                    'no_offline': false,
+                    'no_notification': false,
+                    need_receipt: true
+                }).onSuccess(function (data, msg) {
+                    console.log(data);
+                    console.log(msg);
+                    setTimeout(function () {
+                        resolve({ ...data,
+                            ...msg,
+                            avatarUrl: userInfo.avatarUrl
+                        });
+                    }, 400)
+                })
             });
-
         }
+        // 发送单聊图片
+        function sendSinglePic(img) {
+            console.log(img)
+            JIM.sendSinglePic(img.singlePicFormData).onSuccess(function (data, msg) {
+                console.log(data);
+                console.log(msg);
+                // setTimeout(function () {
+                //     resolve({ ...data,
+                //         ...msg,
+                //         avatarUrl: userInfo.avatarUrl
+                //     });
+                // }, 400)
+            })
+        }
+
+        function sendPicAction(el, data) {
+            var file = el;
+            // const isNotImage = '选择的文件必须是图片';
+            // Util.imgReader(file,
+            //     () => console.error(isNotImage),
+            //     (value) => {
+            //         sendPicContent(value, data).then(img=>{
+            //             sendSinglePic(img)
+            //         })
+            //     }
+            // );
+            const formData=Util.getFileFormData(file);
+            sendPicContent
+        }
+
+        function sendPicContent(value, data) {
+            let msgs = {
+                content: {
+                    from_id: global.username,
+                    msg_type: 'image',
+                    msg_body: {
+                        media_url: value.src,
+                        width: value.width,
+                        height: value.height
+                    }
+                },
+                ctime_ms: new Date().getTime(),
+                success: 1,
+                // msgKey: this.msgKey++,
+                unread_count: 0
+            };
+            const singlePicFormData = {
+                target_username: 'lsg222',
+                // appkey: appkey,
+                image: data,
+                need_receipt: true
+            };
+            msgs.singlePicFormData = singlePicFormData;
+            msgs.msg_type = 3;
+
+            return new Promise((resolve, reject) => {
+                resolve({
+                    singlePicFormData,
+                    // key: this.active.key,
+                    msgs,
+                    // active: this.active
+                });
+            })
+        }
+
+
+        // =====================================  个人消息
+
+        // 更新个人头像
+        var $input = $('#fileId');
+        var URL = window.URL || window.webkitURL;
+        if (URL) {
+            // 给input添加监听
+            $input.change(function () {
+
+                var file = document.getElementById('fileId').files[0];
+                let fd = new FormData();
+                fd.append(file.name, file);
+                var avatarConfig = {
+                    avatar: {
+                        formData: fd,
+                        url: 'logo.png',
+                    },
+                    info: {
+                        nickname: '',
+                        username: 'lsg222'
+                    }
+                }
+                updateSelfInfo(avatarConfig)
+            })
+        }
+        async function updateSelfInfo(self) {
+            var data = await apiService.updateSelfInfo(self.info);
+            if (data.code) {
+                mui.toast(data);
+                if (self.avatar && self.avatar.url) {
+                    updateSelfAvatar(self);
+                }
+            } else {
+                if (self.avatar && self.avatar.url) {
+                    updateSelfAvatar(self);
+                }
+            }
+        }
+        async function updateSelfAvatar(self) {
+            const avatarObj = {
+                avatar: self.avatar.formData
+            };
+            const data = await apiService.updateSelfAvatar(avatarObj);
+            if (!data.code) {
+                setSelfAvatar(self);
+            }
+        }
+
+        async function setSelfAvatar(self) {
+            const userObj = {
+                username: global.username
+            };
+            var data = await apiService.getUserInfo(userObj);
+            if (!data.code && data.user_info.avatar !== '') {
+                const urlObj = {
+                    media_id: data.user_info.avatar
+                };
+                var urlInfo = await apiService.getResource(urlObj);
+                if (!urlInfo.code) {
+                    userInfo.avatarUrl = urlInfo.url;
+                }
+            }
+        }
+
+
 
 
 
@@ -506,7 +544,7 @@ $(function () {
                     if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
                         html += `<div>
                                     <div class="avatar-box">
-                                        <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:'logo.png'}" />
+                                        <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
                                     </div>   
                                     <div class="text"><p>${i.content.msg_body.text}</p></div>
                                 </div>`;
@@ -517,7 +555,7 @@ $(function () {
                     if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
                         html += `<div class="self">
                                         <div class="avatar-box">
-                                            <img class="avatar" src="${i.content.avatarUrl?i.content.avatarUrl:'logo.png'}" />
+                                            <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
                                         </div>   
                                         <div class="text"><p>${i.content.msg_body.text}</p></div>
                                     </div>`;
@@ -538,7 +576,7 @@ $(function () {
             if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
                 html += `<div>
                             <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                                <img class="avatar" src="${content.avatarUrl ? content.avatarUrl : 'logo.png'}" />
                             </div>   
                             <div class="text"><p>${content.msg_body.text}</p></div>
                         </div>`;
@@ -557,7 +595,7 @@ $(function () {
             if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
                 html += `<div class="self">
                             <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl?content.avatarUrl:'logo.png'}" />
+                                <img class="avatar" src="${data.avatarUrl ? data.avatarUrl : 'logo.png'}" />
                             </div>   
                             <div class="text"><p>${content.msg_body.text}</p></div>
                         </div>`;
@@ -575,22 +613,22 @@ $(function () {
                 ctime_ms = data.ctime_ms;
             switch (data.time_show) {
                 case 'year':
-                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
                     break;
                 case 'month':
-                    html += `<span>${dateFormat(ctime_ms,'yyyy-MM-dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
                     break;
                 case 'day':
-                    html += `<span>${dateFormat(ctime_ms,'dd hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'dd hh:mm')}</span>`
                     break;
                 case 'the day before':
-                    html += `<span>前天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>前天${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
                 case 'yesterday':
-                    html += `<span>昨天${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>昨天${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
                 case 'today':
-                    html += `<span>${dateFormat(ctime_ms,'hh:mm')}</span>`
+                    html += `<span>${dateFormat(ctime_ms, 'hh:mm')}</span>`
                     break;
             }
             return html + '</p>';

@@ -1,4 +1,9 @@
  var Util={
+    getFileFormData:file=> {
+        let fd = new FormData();
+        fd.append(file.files[0].name, file.files[0]);
+        return fd;
+    },
  /**
      * fileReader预览图片返回img url
      * @param {Element} file - input type=file dom element
@@ -31,13 +36,9 @@
                     });
                 };
             };
-        }).catch(() => {
-            console.log('Promise Rejected');
-        });
+        })
         promise.then((value) => {
             callback2(value);
-        }, (error) => {
-            // pass
         }).catch(() => {
             console.log('Promise Rejected');
         });

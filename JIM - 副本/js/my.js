@@ -20,8 +20,8 @@ $(function () {
 
         var hasOffline = 0;
         var ChatStore = {
-            conversation: []
-        },
+                conversation: []
+            },
             userInfo = {
                 avatarUrl: ""
             }
@@ -156,54 +156,52 @@ $(function () {
         }
 
         // ============================           逻辑
-        async function creatChatPanel(data) {
-            var allMsg = await getAllMessage(data);
-            // 获取客服的离线消息
-            var activeIndex = null;
-            allMsg.forEach((item, index) => {
-                if (item.from_username == targetUser.across_user) {
-                    activeIndex = index;
+        function creatChatPanel(data) {
+            getAllMessage(data).then(data => {
+                // 获取客服的离线消息
+                var activeIndex = null;
+                data.forEach((item, index) => {
+                    if (item.from_username == targetUser.across_user) {
+                        activeIndex = index;
+                    }
+                });
+                info = {
+                    messageList: data,
+                    active: {
+                        activeIndex: activeIndex || 0
+                    }
                 }
-            });
-            info = {
-                messageList: allMsg,
-                active: {
-                    activeIndex: activeIndex || 0
-                }
-            }
-            getMemberAvatarUrl(info, function (result) {
-                var json = {
-                    msgs: result,
-                    global: global
-                }
-                setTimeout(function () {
+                return info;
+            }).then(info => {
+                getMemberAvatarUrl(info).then(msgs => {
+                    const json = {
+                        msgs: msgs,
+                        global: global
+                    }
                     chatPanelDom(json);
-                }, 400)
+                })
             });
 
+
+
+            // getMemberAvatarUrl(info, function (result) {
+            //     var json = {
+            //         msgs: result,
+            //         global: global
+            //     }
+            //     setTimeout(function () {
+            //         chatPanelDom(json);
+            //     }, 400)
+            // });
+
         }
-        // 发送信息
+        // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
             if (oTarget.id == 'test-send') {
-                sendSingleMsg().then((data)=>{
-                    var content = $('.action textarea').val();
-                    var json = {
-                        ...data,
-                        content: {
-                            msg_body: {
-                                text: content
-                            },
-                            avatarUrl: userInfo.avatarUrl
-                        },
-                        msg_type: 'text'
-                    }
-                    return json;
-                }).then((json)=>{
-                    setTimeout(function(){
-                        sendSingleMsgDom(json);
-                    },1000)
-                });
+                sendSingleMsg().then(info => {
+                    sendSingleMsgDom(info);
+                })
             }
         });
 
@@ -237,8 +235,8 @@ $(function () {
         // =============================== 离线消息
         // 获取所有漫游同步消息
         async function getAllMessage(data) {
-            var newData = data;
-            for (let dataItem of newData) {
+
+            for (let dataItem of data) {
                 // 时间显示方式
                 for (let j = 0; j < dataItem.msgs.length; j++) {
                     if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
@@ -248,7 +246,7 @@ $(function () {
                         }
                         if (j + 1 !== dataItem.msgs.length) {
                             if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                dataItem.msgs[j + 1].ctime_ms)) {
+                                    dataItem.msgs[j + 1].ctime_ms)) {
                                 dataItem.msgs[j + 1].time_show =
                                     Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                             }
@@ -294,44 +292,48 @@ $(function () {
                     });
                 }
             }
-            return newData
+            return data;
         }
         // 获取messageList avatar url
-        function getMemberAvatarUrl(info, callback) {
-            let userArr = [];
-            const msgs = info.messageList[info.active.activeIndex].msgs;
-            for (let i = 0; i < msgs.length; i++) {
-                msgs[i].content.avatarUrl = '';
-                if (msgs[i].content.from_id !== global.username &&
-                    userArr.indexOf(msgs[i].content.from_id) < 0) {
-                    userArr.push(msgs[i].content.from_id);
+        function getMemberAvatarUrl(info) {
+            return new Promise((resolve) => {
+                let userArr = [];
+                const msgs = info.messageList[info.active.activeIndex].msgs;
+                for (let i = 0; i < msgs.length; i++) {
+                    msgs[i].content.avatarUrl = '';
+                    if (msgs[i].content.from_id !== global.username &&
+                        userArr.indexOf(msgs[i].content.from_id) < 0) {
+                        userArr.push(msgs[i].content.from_id);
+                    }
                 }
-            }
-            // 添加自己，设置头像
-            userArr.push(global.username);
+                // 添加自己，设置头像
+                userArr.push(global.username);
 
-            for (let user of userArr) {
-                const userObj = {
-                    username: user
-                };
-                apiService.getUserInfo(userObj).then((data) => {
-                    if (!data.code && data.user_info.avatar !== '') {
-                        const urlObj = {
-                            media_id: data.user_info.avatar
-                        };
-                        apiService.getResource(urlObj).then((urlInfo) => {
-                            if (!urlInfo.code) {
-                                for (let i = 0; i < msgs.length; i++) {
-                                    if (msgs[i].content.from_id === user) {
-                                        msgs[i].content.avatarUrl = urlInfo.url;
+                for (let user of userArr) {
+                    const userObj = {
+                        username: user
+                    };
+                    apiService.getUserInfo(userObj).then((data) => {
+                        if (!data.code && data.user_info.avatar !== '') {
+                            const urlObj = {
+                                media_id: data.user_info.avatar
+                            };
+                            apiService.getResource(urlObj).then((urlInfo) => {
+                                if (!urlInfo.code) {
+                                    for (let i = 0; i < msgs.length; i++) {
+                                        if (msgs[i].content.from_id === user) {
+                                            msgs[i].content.avatarUrl = urlInfo.url;
+                                        }
                                     }
                                 }
-                            }
-                        })
-                    }
-                });
-            }
-            (callback && typeof (callback) === "function") && callback(msgs);
+                            })
+                        }
+                    });
+                }
+                setTimeout(function () {
+                    resolve(msgs);
+                }, 400)
+            })
         }
 
         // 获取单聊信息
@@ -373,20 +375,40 @@ $(function () {
             return new Promise((resolve) => {
                 var content = $('.action textarea').val();
                 if (content == '') return;
-                var json = {
+                JIM.sendSingleMsg({
                     'target_username': targetUser.across_user,
                     'appkey': targetUser.across_appkey,
                     'content': content,
                     'no_offline': false,
                     'no_notification': false,
                     need_receipt: true
-                }
-                apiService.sendSingleMsg(json).then(function(data){                   
-                    resolve(data);
+                }).onSuccess(function (data, msg) {
+                    console.log(data);
+                    console.log(msg);
+                    setTimeout(function () {
+                        resolve({ ...data,
+                            ...msg,
+                            avatarUrl: userInfo.avatarUrl
+                        });
+                    }, 400)
                 })
             });
         }
-
+        // 发送图片
+        function sendPicAction(event) {
+            // 为了防止首次选择了文件，第二次选择文件的时候点击取消按钮时触发change事件的报错
+            if (!event.target.files[0]) {
+                return;
+            }
+            let img = Util.getFileFormData(event.target);
+            this.sendPic.emit({
+                img,
+                type: 'send'
+            });
+            this.contentDiv.nativeElement.focus();
+            Util.focusLast(this.contentDiv.nativeElement);
+            event.target.value = '';
+        }
 
 
 
@@ -523,7 +545,7 @@ $(function () {
             if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
                 html += `<div class="self">
                             <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl ? content.avatarUrl : 'logo.png'}" />
+                                <img class="avatar" src="${data.avatarUrl ? data.avatarUrl : 'logo.png'}" />
                             </div>   
                             <div class="text"><p>${content.msg_body.text}</p></div>
                         </div>`;

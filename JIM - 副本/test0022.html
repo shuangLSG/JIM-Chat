@@ -28,20 +28,43 @@
 <body>
     <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
         <div class="mui-scroll message">
-                <ul></ul>
+            <ul></ul>
         </div>
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
             <textarea class="margin-l-26"></textarea>
-            <span class="mui-icon mui-icon-plus margin-h-26"></span>
+            <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
             <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
         </div>
+        <div id="room-container">
+            <!--class="menu-showed" -->
+
+            <div id="menu-wrapper" class="menu-wrapper hidden">
+                <div id="menu" class="menu">
+
+                    <div class="room-panel-message-input">
+                        <div class="room-panel-send-file">
+                            <div class="room-panel-item">
+                                <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
+                                    <input type="file" name="file" id="sendPic2" class="room-panel-singlePic">
+                                    <p>图片</p>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
         <!-- <form id='myForm'>
-            <input type='text' name='usrName' value='kevin'/>
-            <input type='file' id='fileId'/>
-         </form> -->
+                <input type='text' name='usrName' value='kevin'/>
+                <input type='file' id='fileId'/>
+             </form> -->
     </footer>
+    <div id="menu-backdrop" class="menu-backdrop"></div>
+
     <!-- 时间 -->
     <script id="room-panel-time" type="text/html">
         <p class="time">  
@@ -63,7 +86,7 @@
         </p>
     </script>
     <script id="test" type="text/html">
-            {{each msgs i index}}
+        {{each msgs i index}}
                 {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
                     <li>
                         {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
@@ -91,7 +114,7 @@
                 {{/if}}
             {{/each}}
     </script>
-    
+
     <!-- 别人发送的消息 -->
     <script id="recivemsg" type="text/html">
         <li>{{content}}
@@ -125,16 +148,62 @@
 
     <script src="js/rem.js"></script>
     <script src="js/common.js"></script>
+    <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
 
     <script src="js/mui.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
     <script src="chatJIM/util.js"></script>
+    <script src="chatJIM/main-effect.js"></script>
     <script src="chatJIM/chat-effect.js"></script>
-    
     <script src="chatJIM/chat-reducer.js"></script>
-    <script src="js/test0022.js"></script>       
+    <script src="chatJIM/self-info/self-info.js"></script>
+    <script src="js/test0022.js"></script>
+
+    <script>
+        mui.init({
+            swipeBack: true //启用右滑关闭功能
+        });
+        var menuWrapper = document.getElementById("menu-wrapper");
+        var menu = document.getElementById("menu");
+        var menuWrapperClassList = menuWrapper.classList;
+        var backdrop = document.getElementById("menu-backdrop");
+
+        backdrop.addEventListener('tap', toggleMenu);
+        document.getElementById("menu-btn").addEventListener('tap', toggleMenu);
+        //下沉菜单中的点击事件
+        mui('#menu').on('tap', 'a', function () {
+            toggleMenu();
+        });
+        var busying = false;
+
+        function toggleMenu() {
+            if (busying) {
+                return;
+            }
+            busying = true;
+            if (menuWrapperClassList.contains('mui-active')) {
+                document.body.classList.remove('menu-open');
+                menuWrapper.className = 'menu-wrapper fade-out-down animated';
+                menu.className = 'menu bounce-out-down animated';
+                setTimeout(function () {
+                    backdrop.style.opacity = 0;
+                    menuWrapper.classList.add('hidden');
+                    $('#room-container').removeClass('menu-showed');
+                }, 500);
+            } else {
+                document.body.classList.add('menu-open');
+                menuWrapper.className = 'menu-wrapper fade-in-up animated mui-active';
+                menu.className = 'menu bounce-in-up animated';
+                backdrop.style.opacity = 1;
+                $('#room-container').addClass('menu-showed');
+            }
+            setTimeout(function () {
+                busying = false;
+            }, 500);
+        }
+    </script>
 </body>
 
 </html>
