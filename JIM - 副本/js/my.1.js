@@ -19,10 +19,10 @@ $(function () {
 
         var hasOffline = 0;
         var ChatStore = {
-                conversation: [],
-                messageList: [],
-                newMessage: {}
-            },
+            conversation: [],
+            messageList: [],
+            newMessage: {}
+        },
             userInfo = {
                 avatarUrl: ""
             },
@@ -176,30 +176,19 @@ $(function () {
                 }
                 return info;
             }).then(info => {
-                getMemberAvatarUrl(info).then(msgs => {
-                    const json = {
-                        msgs: msgs,
-                        global: global
-                    }
-                    console.log(json)
-                    $('.message ul').html(template('test', json));
-                    scrollBottom(); // 滚动到底部
-                });
+                getMemberAvatarUrl(info).then(msgs=>{
 
+                    getSourceUrl(msgs,info).then(info=>{
+                        const json = {
+                            msgs: info,
+                            global: global
+                        }
+                        console.log(json)
+                        $('.message ul').html(template('test', json));
+                        scrollBottom(); // 滚动到底部
+                    })
+                })
             });
-
-
-
-            // getMemberAvatarUrl(info, function (result) {
-            //     var json = {
-            //         msgs: result,
-            //         global: global
-            //     }
-            //     setTimeout(function () {
-            //         chatPanelDom(json);
-            //     }, 400)
-            // });
-
         }
         // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
@@ -260,7 +249,7 @@ $(function () {
                         }
                         if (j + 1 !== dataItem.msgs.length) {
                             if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                    dataItem.msgs[j + 1].ctime_ms)) {
+                                dataItem.msgs[j + 1].ctime_ms)) {
                                 dataItem.msgs[j + 1].time_show =
                                     Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                             }
@@ -294,12 +283,7 @@ $(function () {
             ChatStore.messageList = data;
             return data;
         }
-        async function onLoginLoad(data){
-            const avatarUrl =await getMemberAvatarUrl(data);
-            const sourceUrl =await getSourceUrl(data);
-            const result= Object.assign(avatarUrl,sourceUrl);
-            return result;
-        }
+     
         // 获取messageList avatar url
         function getMemberAvatarUrl(info) {
             return new Promise((resolve) => {
@@ -336,6 +320,7 @@ $(function () {
                         }
                     });
                 }
+               
                 setTimeout(function () {
                     resolve(msgs);
                 }, 400)
@@ -361,7 +346,7 @@ $(function () {
                 }
                 setTimeout(function () {
                     resolve(msgs);
-                }, 200)
+                }, 400)
             })
         }
 

@@ -89,31 +89,58 @@
                 {{if i.content && global.username != i.content.from_id && i.msg_type !== 5}}
                     <li>
                         {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
-                            <!-- {{include 'room-panel-time' i}} -->
+                            {{include 'room-panel-time' i}}
                             <div>
                                 <div class="avatar-box">
                                     <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
                                 </div>   
                                 <div class="text"><p>{{i.content.msg_body.text}}</p></div>
                             </div>
+                        {{else if i.content.msg_type === 'image' &&(!i.content.msg_body.extras || (i.content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon))}}
+                            {{include 'room-panel-time' i}}
+                            <div>
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}}" />
+                                </div> 
+                                <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
+                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height * 300 + 'px')
+                                :i.content.msg_body.width + 'px'}}">
+                                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                </div>
+                            </div>
                         {{/if}}
                     </li>
                 {{else}}
                     <li>
                         {{if i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)}}
-                            <!-- {{include 'room-panel-time' i}} -->
+                            {{include 'room-panel-time' i}}
                             <div class="self">
                                 <div class="avatar-box">
                                     <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
                                 </div> 
                                 <div class="text"><p>{{i.content.msg_body.text}}</p></div>
                             </div>
+                        
+                        {{else if i.content.msg_type === 'image' &&(!i.content.msg_body.extras || (i.content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon))}}
+                            {{include 'room-panel-time' i}}
+                            <div class="self">
+                                <div class="avatar-box">
+                                    <img class="avatar" src="{{i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}}" />
+                                </div> 
+                                <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
+                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height * 300 + 'px')
+                                :i.content.msg_body.width + 'px'}}">
+                                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                </div>
+                            </div>
                         {{/if}}
                     </li>
                 {{/if}}
             {{/each}}
     </script>
-
+    
     <!-- 别人发送的消息 -->
     <script id="recivemsg_text" type="text/html">
         <li>
