@@ -14,6 +14,10 @@ const apiService = {
     sendSingleMsg:function (singleMsg = {}, success, error, timeout) {
         return this.callback(JIM.sendSingleMsg(singleMsg), success, error, timeout);
     },
+    // 发送或者转发单聊图片
+    sendSinglePic:function(singlePic= {}, successn, error, timeout) {
+        return this.msgCallback(JIM.sendSinglePic(singlePic), success, error, timeout);
+    },
     downloadThumbUserAvatar:function (myAvatar = {}, success, error, timeout) {
         return this.callback(JIM.downloadThumbUserAvatar(myAvatar), success, error, timeout);
     },

@@ -65,6 +65,12 @@ textarea {
     display: flex;
     justify-content: center;
 }
+.message .avatar-box+.image{
+    float:left;
+}
+.message .avatar-box+.image .chat-panel-message-img{
+    width: 100%
+}
 .message .avatar-box img {
     height: 100%;
 }
@@ -121,7 +127,8 @@ textarea {
     text-align: right;
 }
 
-.message .self .avatar-box {
+.message .self .avatar-box,
+.message .self .image {
     float: right;
 }
 
