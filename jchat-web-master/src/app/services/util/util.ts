@@ -74,7 +74,7 @@ export abstract class Util {
      * @param {Element} file - input type=file dom element
      * @param {Function} callback - 回调函数
      * @param {Function} callback2 - 回调函数
-     */
+     */ 
     public static imgReader(file, callback?: Function, callback2?: Function): void | boolean {
         let files = file.files[0];
         if (!files) {

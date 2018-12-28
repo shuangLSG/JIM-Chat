@@ -16,6 +16,18 @@
 
 // 添加消息到消息面板
 function addMessage(state = ChatStore, payload,global) {
+    // 判断消息是否要显示时间
+    if (state.messageList.length === 0) {
+        payload.time_show = Util.reducerDate(payload.ctime_ms);
+    } else {
+        const fiveMinutes =
+            Util.fiveMinutes(state.messageList[state.messageList.length - 1].ctime_ms,
+                payload.ctime_ms);
+        if (fiveMinutes) {
+            payload.time_show = Util.reducerDate(payload.ctime_ms);
+        }
+    }
+    state.messageList.push(payload);
     // 接收到别人的消息添加到消息列表/同步自己发送的消息
     if (payload.messages && payload.messages[0]) {
         let message = payload.messages[0];
@@ -124,7 +136,7 @@ function addMyselfMesssge(state = ChatStore, payload,global) {
                 payload.msgs.time_show = 'today';
             }
             msgs.push(payload.msgs);
-            state.newMessage ={ ...payload.msgs,...global.avatarUrl};
+            state.newMessage ={ ...payload.msgs,avatarUrl:global.avatarUrl};
             break;
         }
     }

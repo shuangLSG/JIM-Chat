@@ -1,35 +1,26 @@
 $(function () {
     (function (mui, $) {
 
-        var defaultAvatar = 'logo.png';
-
-
         /** ============== mui ==================*/
-        mui.init({
-            swipeBack: false, //启用右滑关闭功能
-        });
-        var scroll = mui('.mui-scroll-wrapper').scroll({
-            bounce: false //是否启用回弹
-        });
-
         function scrollBottom() {
             mui('.mui-scroll-wrapper').scroll().reLayout();
-            mui('.mui-scroll-wrapper').scroll().scrollToBottom(100);
+            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
 
+        /** =================================== 
+                           JIM
+        ======================================*/
         var hasOffline = 0;
         var ChatStore = {
-            conversation: [],
-            messageList: [],
-            newMessage: {}
-        },
+                conversation: [],
+                messageList: [],
+                newMessage: {}
+            },
             userInfo = {
                 avatarUrl: ""
             },
             msgKey = 1; // 有用到
-        /** =================================== 
-                           JIM
-        ======================================*/
+        
         window.JIM = new JMessage({
             debug: true
         });
@@ -139,6 +130,9 @@ $(function () {
                 // 获取会话列表
                 getConversation();
 
+                // 发送单聊自定义消息
+                sendSingleCustom();
+
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
@@ -176,9 +170,9 @@ $(function () {
                 }
                 return info;
             }).then(info => {
-                getMemberAvatarUrl(info).then(msgs=>{
+                getMemberAvatarUrl(info).then(msgs => {
 
-                    getSourceUrl(msgs,info).then(info=>{
+                    getSourceUrl(msgs, info).then(info => {
                         const json = {
                             msgs: info,
                             global: global
@@ -232,7 +226,19 @@ $(function () {
             }
             ChatStore.conversation = info.conversations;
         }
-
+        // 发送单聊自定义消息
+        async function sendSingleCustom() {
+            const data = {
+                'target_username': targetUser.across_user,
+                'custom': {
+                    'id':75
+                },
+                'appkey': across_appkey,
+                'nead_receipt': true
+            }
+            const custom = await apiService.sendSingleCustom(data);
+            console.log(custom)
+        }
 
 
         // =============================== 离线消息
@@ -249,7 +255,7 @@ $(function () {
                         }
                         if (j + 1 !== dataItem.msgs.length) {
                             if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                dataItem.msgs[j + 1].ctime_ms)) {
+                                    dataItem.msgs[j + 1].ctime_ms)) {
                                 dataItem.msgs[j + 1].time_show =
                                     Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                             }
@@ -283,7 +289,7 @@ $(function () {
             ChatStore.messageList = data;
             return data;
         }
-     
+
         // 获取messageList avatar url
         function getMemberAvatarUrl(info) {
             return new Promise((resolve) => {
@@ -320,7 +326,7 @@ $(function () {
                         }
                     });
                 }
-               
+
                 setTimeout(function () {
                     resolve(msgs);
                 }, 400)
@@ -410,22 +416,16 @@ $(function () {
 
 
         // 发送单聊图片
-        function sendSinglePic(img) {
-            JIM.sendSinglePic(img.singlePicFormData).onSuccess(msg => {
-                const payload = {
-                    msgs: img.msgs,
-                    type: 3,
-                }
-                addMessage(ChatStore, payload, global);
-                $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
-                scrollBottom(); // 滚动到底部
-                console.log(msg);
-            }).onFail(code => {
-                console.log(code)
-            })
+        async function sendSinglePic(img) {
+            const msg= apiService.sendSinglePic(img.singlePicFormData);
+            const payload = {
+                msgs: img.msgs,
+                type: 3,
+            }
+            addMessage(ChatStore, payload, global);
+            $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
+            scrollBottom(); // 滚动到底部
         }
-
-
 
         function sendPicAction(file, data) {
             const isNotImage = '选择的文件必须是图片';
@@ -537,13 +537,5 @@ $(function () {
                 }
             }
         }
-
-
-
-
-
-        //========================================  DOM
-
-
     })(mui, jQuery)
 })
