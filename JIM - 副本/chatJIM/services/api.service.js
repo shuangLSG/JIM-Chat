@@ -1,4 +1,14 @@
 const apiService = {
+    // 重置会话徽标未读数
+    resetUnreadCount: function(conversationObj, success) {
+        return new Promise((resolve) => {
+            JIM.resetUnreadCount(conversationObj);
+            if (success && success instanceof Function) {
+                success();
+            }
+            resolve();
+        });
+    },
     init: function (initObj = {}, success, error, timeout) {
         return this.callback(JIM.init(initObj), success, error, timeout);
     },
@@ -13,14 +23,6 @@ const apiService = {
     },
     sendSingleMsg:function (singleMsg = {}, success, error, timeout) {
         return this.callback(JIM.sendSingleMsg(singleMsg), success, error, timeout);
-    },
-    // 发送或者转发单聊图片
-    sendSinglePic:function(singlePic= {}, success, error, timeout) {
-        return this.msgCallback(JIM.sendSinglePic(singlePic), success, error, timeout);
-    },
-    // 发送单聊自定义消息
-    sendSingleCustom:function(singleCustom= {}, success, error, timeout) {
-        return this.msgCallback(JIM.sendSingleCustom(singleCustom), success, error, timeout);
     },
     downloadThumbUserAvatar:function (myAvatar = {}, success, error, timeout) {
         return this.callback(JIM.downloadThumbUserAvatar(myAvatar), success, error, timeout);
@@ -49,33 +51,6 @@ const apiService = {
                         args[0](successData);
                     }
                     resolve(successData);
-                }).onFail((errorData) => {
-                    if (args[1] && args[1] instanceof Function) {
-                        args[1](errorData);
-                    }
-                    resolve(errorData);
-                }).onTimeout(() => {
-                    if (args[2] && args[2] instanceof Function) {
-                        args[2]();
-                    }
-                    resolve(timeoutData);
-                });
-            }
-        });
-    },
-    // 发送消息回调函数
-    msgCallback:function(obj, ...args){
-        return new Promise((resolve) => {
-            if (obj && obj.onSuccess) {
-                obj.onSuccess((successData, msgs) => {
-                    if (successData.key) {
-                        msgs.key = successData.key;
-                    }
-                    msgs.unread_count = successData.unread_count || 0;
-                    if (args[0] && args[0] instanceof Function) {
-                        args[0](msgs);
-                    }
-                    resolve(msgs);
                 }).onFail((errorData) => {
                     if (args[1] && args[1] instanceof Function) {
                         args[1](errorData);

@@ -3,8 +3,10 @@ $(function () {
 
         /** ============== mui ==================*/
         function scrollBottom() {
-            mui('.mui-scroll-wrapper').scroll().reLayout();
-            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
+            var ele = document.querySelector('.mui-scroll');
+            ele.scrollTop = ele.scrollHeight;
+            // mui('.mui-scroll-wrapper').scroll().reLayout();
+            // mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
 
         /** =================================== 

@@ -173,7 +173,12 @@ textarea {
     font-size: 0.32rem;
     color: #000;
 }
-
+.room-panel-message-input input{
+    display: block;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+}
 
 
 

@@ -17,53 +17,73 @@
             right: 0;
             top: 0;
             bottom: 0;
-            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
+            -webkit-overflow-scrolling: touch;
+            /* 解决ios滑动不流畅问题 */
         }
-        .mui-scroll-wrapper{
+
+        .mui-scroll-wrapper {
             padding-bottom: 60px;
+        }
+
+        .chat-container {
+            display: flex;
+            display: -webkit-flex;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .mui-scroll {
+            position: initial;
+            flex: 1;
+            width: 100%;
+            overflow-y: scroll;
+            -webkit-overflow-scrolling: touch;
+            height: auto;
+            /* margin-bottom: 50px; */
         }
     </style>
 </head>
 
 <body>
-    <div id="pullrefresh" class="mui-scroll-wrapper mui-content bg-gray">
-        <div class="mui-scroll message">
-            <ul></ul>
+    <div class="chat-container">
+        <!-- <div class="mui-scroll-wrapper mui-content bg-gray"> -->
+        <div class="mui-scroll message  bg-gray">
+            <ul style="padding-bottom:50px;"></ul>
         </div>
-    </div>
-    <footer class="mui-bar mui-bar-tab">
-        <div class="action">
-            <textarea class="margin-l-26"></textarea>
-            <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
-            <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
-        </div>
-        <div id="room-container">
-            <!--class="menu-showed" -->
+        <!-- </div> -->
+        <footer class="mui-bar mui-bar-tab">
+            <div class="action">
+                <textarea class="margin-l-26"></textarea>
+                <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
+                <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
+            </div>
+            <div id="room-container">
+                <!--class="menu-showed" -->
 
-            <div id="menu-wrapper" class="menu-wrapper hidden">
-                <div id="menu" class="menu">
+                <div id="menu-wrapper" class="menu-wrapper hidden">
+                    <div id="menu" class="menu">
 
-                    <div class="room-panel-message-input">
-                        <div class="room-panel-send-file">
-                            <div class="room-panel-item">
-                                <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
-                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic"
-                                        multiple="multiple">
-                                    <p>图片</p>
-                                </label>
+                        <div class="room-panel-message-input">
+                            <div class="room-panel-send-file">
+                                <div class="room-panel-item">
+                                    <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
+                                        <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic" multiple="multiple">
+                                        <p>图片</p>
+                                    </label>
+                                </div>
                             </div>
                         </div>
+
                     </div>
-
                 </div>
-            </div>
 
-        </div>
-        <!-- <form id='myForm'>
-                <input type='text' name='usrName' value='kevin'/>
-                <input type='file' id='fileId'/>
-             </form> -->
-    </footer>
+            </div>
+            <!-- <form id='myForm'>
+                    <input type='text' name='usrName' value='kevin'/>
+                    <input type='file' id='fileId'/>
+                </form> -->
+        </footer>
+    </div>
     <div id="menu-backdrop" class="menu-backdrop"></div>
 
     <!-- 时间 -->
@@ -222,10 +242,10 @@
         mui.init({
             swipeBack: false, //启用右滑关闭功能
         });
-        var scroll = mui('.mui-scroll-wrapper').scroll({
-            bounce: false //是否启用回弹
-        });
-        
+        // var scroll = mui('.mui-scroll-wrapper').scroll({
+        //     bounce: false //是否启用回弹
+        // });
+
         // 底部操作菜单
         var menuWrapper = document.getElementById("menu-wrapper");
         var menu = document.getElementById("menu");
@@ -238,6 +258,9 @@
         mui('#menu').on('tap', 'a', function () {
             toggleMenu();
         });
+        $('.mui-bar textarea').focus(function(){
+            toggleMenu();
+        })
         var busying = false;
 
         function toggleMenu() {
@@ -249,6 +272,7 @@
                 document.body.classList.remove('menu-open');
                 menuWrapper.className = 'menu-wrapper fade-out-down animated';
                 menu.className = 'menu bounce-out-down animated';
+                $('.mui-bar').css('position','fixed');
                 setTimeout(function () {
                     backdrop.style.opacity = 0;
                     menuWrapper.classList.add('hidden');
@@ -260,10 +284,20 @@
                 menu.className = 'menu bounce-in-up animated';
                 backdrop.style.opacity = 1;
                 $('#room-container').addClass('menu-showed');
+                $('.mui-bar').css('position','relative');
+                setTimeout(function(){
+                    scrollBottom();
+                },400);
             }
             setTimeout(function () {
                 busying = false;
             }, 500);
+        }
+        function scrollBottom() {
+            var ele = document.querySelector('.mui-scroll');
+            ele.scrollTop = ele.scrollHeight;
+            var container = document.querySelector('.chat-container');
+            container.scrollTop = container.scrollHeight;
         }
     </script>
 </body>
