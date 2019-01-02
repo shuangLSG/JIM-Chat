@@ -2,10 +2,11 @@ $(function () {
     (function (mui, $) {
         var hasOffline = 0;
         var ChatStore = {
-                conversation: [],
-                messageList: [],
-                newMessage: {}
-            },
+            conversation: [],
+            messageList: [],
+            newMessage: {},
+            imageViewer: []
+        },
             imageViewer = {
                 result: [],
                 active: {
@@ -16,6 +17,8 @@ $(function () {
             userInfo = {
                 avatarUrl: ""
             },
+            sourceUrl = '',
+            imgviewindex=-1,// 当前预览图片的索引
             activeIndex = 0, // 目标用户在会话列表的索引 
             msgKey = 1; // 有用到
         /** ============== mui ==================*/
@@ -256,20 +259,24 @@ $(function () {
 
                         $('.message ul').html(template('test', json));
                         scrollBottom(); // 滚动到底部
-                        
-                        return data;
-                    }).then(getsourceurl => {
+
                         // 图片预览的处理
-                       let imgResult =  filterImageViewer(getsourceurl);
-                       console.log(getsourceurl)
-                       console.log(imgResult)
-                    });
+                        let imgResult = filterImageViewer();
+                        imageViewer.result = imgResult;
+                        console.log(imgResult)
+                    })
                 })
             })
         }
+
+        /**
+         * ========================
+         *        图片预览
+         * ========================
+         */
         // 过滤出当前图片预览的数组
-        function filterImageViewer(messageList) {
-            // let messageList = data[activeIndex];
+        function filterImageViewer() {
+            let messageList = ChatStore.messageList[activeIndex];
             if (activeIndex < 0 || !messageList || !messageList.msgs) {
                 return [];
             }
@@ -291,7 +298,92 @@ $(function () {
             }
             return imgResult;
         }
-
+        // 加载预览图片的图片url
+        async function loadViewerImage(info) {
+            const urlObj = { media_id: info.mediaId };
+            const data = await apiService.getResource(urlObj);
+            if (data.code) {
+                this.errorFn(data);
+            } else {
+                info.src = data.url;
+                // 加载图片预览没有加载的图片url
+                // ChatStore.viewerImageUrl = info;
+                // addImageUrl(info);
+            }
+        };
+        function addImageUrl(viewerImageUrl) {
+            for (let img of imageViewer.result) {
+                if (img.index === viewerImageUrl.index && img.src === viewerImageUrl.src) {
+                    img.src = viewerImageUrl.src;
+                    imageViewer.active = Util.deepCopyObj(imageViewer.result[imgviewindex]);
+                    imageViewer.active.index = imgviewindex;
+                    break;
+                }
+            }
+        }
+        // 图片预览
+        function imageViewerShow(item) {
+            for (let i = 0; i < imageViewer.result.length; i++) {
+                const msgIdFlag = item.msg_id && imageViewer.result[i].msg_id == item.msg_id;
+                // const msgKeyFlag = item.msgKey && imageViewer.result[i].msgKey === item.msgKey;
+                if (msgIdFlag) {
+                    imageViewer.active = Util.deepCopyObj(imageViewer.result[i]);
+                    imageViewer.active.index = i;
+                    break;
+                }
+            }
+            imageViewer.show = true;
+            console.log(imageViewer)
+            // viewer = imageViewer;
+        }
+        function prev() {
+            const activeIndex = imageViewer.active.index;
+            const index = activeIndex > 0 ? activeIndex - 1 : activeIndex;
+            imgviewindex = index;
+            if (imgviewindex !== activeIndex) {
+                // 如果该图片的url尚未加载，则去请求url
+                if (!imageViewer.result[index].src) {
+                    // this.imgHidden = true;
+                    // this.store$.dispatch({
+                    //     type: chatAction.loadViewerImage,
+                    //     payload: this.imageViewer.result[index]
+                    // });
+                } else {
+                    // 为了解决相邻两张相同的base64图片不触发onload事件
+                    if (imageViewer.active.src === imageViewer.result[index].src) {
+                        this.imgHidden = false;
+                    } else {
+                        this.imgHidden = true;
+                    }
+                    imageViewer.active = Object.assign({}, imageViewer.result[index], {});
+                    imageViewer.active.index = index;
+                }
+            } else {
+                mui.toast('已经是第一张了');
+            }
+        }
+        function next() {
+            const activeIndex = imageViewer.active.index;
+            const index = activeIndex < imageViewer.result.length - 1 ?
+                activeIndex + 1 : activeIndex;
+            if (index !== activeIndex) {
+                // 为了解决相邻两张相同的base64图片不触发onload事件
+                if (imageViewer.active.src === imageViewer.result[index].src) {
+                    this.imgHidden = false;
+                } else {
+                    this.imgHidden = true;
+                }
+                imageViewer.active = Object.assign({}, imageViewer.result[index], {});
+                imageViewer.active.index = index;
+            } else {
+                mui.toast('已经是最后一张了');
+            }
+        }
+        function closeViewerAction(event) {
+            this.imageViewer.show = false;
+            this.closeImageViewer.emit();
+            event.stopPropagation();
+        }
         // ==========================================页面事件操作
         // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
@@ -315,20 +407,11 @@ $(function () {
                 sendPicAction(file, emit);
             })
         }
-        // 图片预览
-        function imageViewerShow(item) {
-            for (let i = 0; i < this.imageViewer.result.length; i++) {
-                const msgIdFlag = item.msg_id && this.imageViewer.result[i].msg_id === item.msg_id;
-                const msgKeyFlag = item.msgKey && this.imageViewer.result[i].msgKey === item.msgKey;
-                if (msgIdFlag || msgKeyFlag) {
-                    this.imageViewer.active = Util.deepCopyObj(this.imageViewer.result[i]);
-                    this.imageViewer.active.index = i;
-                    break;
-                }
-            }
-            this.imageViewer.show = true;
-            this.viewer = this.imageViewer;
-        }
+        mui('.mui-scroll').on('tap', '.image img', function () {
+            console.log(this)
+            var msg_id = this.dataset.msg_id;
+            imageViewerShow({ msg_id: msg_id });
+        })
 
 
 
@@ -380,7 +463,7 @@ $(function () {
                             }
                             if (j + 1 !== dataItem.msgs.length) {
                                 if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                        dataItem.msgs[j + 1].ctime_ms)) {
+                                    dataItem.msgs[j + 1].ctime_ms)) {
                                     dataItem.msgs[j + 1].time_show =
                                         Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                                 }
@@ -498,6 +581,7 @@ $(function () {
                                 if (urlInfo.code) {
                                     msgs[i].content.msg_body.media_url = '';
                                 } else {
+                                    sourceUrl = urlInfo.url;
                                     msgs[i].content.msg_body.media_url = urlInfo.url;
                                 }
                                 console.log(i)
@@ -510,8 +594,8 @@ $(function () {
                 }
                 setTimeout(function () {
                     resolve(msgs);
-                    ChatStore.messageList = msgs;
-                }, 600)
+                    ChatStore.messageList[info.active.activeIndex].msgs = msgs;
+                }, 00)
             })
         }
 

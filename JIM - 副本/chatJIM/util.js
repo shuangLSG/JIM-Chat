@@ -1,4 +1,20 @@
  var Util={
+     /**
+     * 深度拷贝对象（只能深度拷贝没有方法属性的对象）
+     * @param {Object} obj - 需要拷贝的对象
+     * @returns {Object} result - 新的对象
+     */
+    deepCopyObj: function(obj) {
+        return JSON.parse(JSON.stringify(obj));
+    },
+    /**
+     * 生成JIM初始化的签名
+     * @param {number} timestamp - 当前的时间毫秒数
+     * @returns {string} 签名
+     */
+    createSignature: function(timestamp) {
+        return md5(`appkey=${authPayload.appkey}&timestamp=${timestamp}&random_str=${authPayload.randomStr}&key=${authPayload.masterSecret}`);
+    },
     getFileFormData:file=> {
         let fd = new FormData();
         fd.append(file.files[0].name, file.files[0]);

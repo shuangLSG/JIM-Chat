@@ -40,6 +40,8 @@ function addMessage(state = ChatStore, payload,global) {
                 isMySelf ? message.content.from_appkey : message.content.target_appkey;
             message.content.isMySelf =isMySelf;
         }
+        filterNewMessage(state, payload, message);
+
         let flag = false;
         // 如果发送人在会话列表里
         for (let a = 0; a < state.conversation.length; a++) {
@@ -141,7 +143,20 @@ function addMyselfMesssge(state = ChatStore, payload,global) {
         }
     }
 }
-
+// 处理新消息
+function filterNewMessage(state,payload,message) {
+    // 更新imageViewer的数组
+    const isSingleMessage = message.msg_type === 3 && message.content.from_id === targetUser.across_user;
+    const isImage = message.content.msg_type === 'image';
+    if ((isSingleMessage) && isImage) {
+        state.imageViewer.push({
+            src: message.content.msg_body.media_url,
+            width: message.content.msg_body.width,
+            height: message.content.msg_body.height,
+            msg_id: message.msg_id
+        });
+    }
+}
 
 // 新消息用户不在会话列表中
 function addMessageUserNoConversation(state = ChatStore, payload, message) {
