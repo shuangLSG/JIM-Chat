@@ -3,10 +3,8 @@ $(function () {
 
         /** ============== mui ==================*/
         function scrollBottom() {
-            var ele = document.querySelector('.mui-scroll');
-            ele.scrollTop = ele.scrollHeight;
-            // mui('.mui-scroll-wrapper').scroll().reLayout();
-            // mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
+            mui('.mui-scroll-wrapper').scroll().reLayout();
+            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
 
         /** =================================== 
@@ -38,7 +36,10 @@ $(function () {
         var across_appkey = '4f7aef34fb361292c566a1cd';
 
         init();
-
+        //异常断线监听
+        JIM.onDisconnect(function () {
+            init();
+        }); 
         function register() {
             JIM.register({
                 ...global
@@ -133,7 +134,7 @@ $(function () {
                 getConversation();
 
                 // 发送单聊自定义消息
-                sendSingleCustom();
+                // sendSingleCustom();
 
 
                 //离线消息同步监听
@@ -186,6 +187,9 @@ $(function () {
                 })
             });
         }
+
+
+        // ==========================================页面事件操作
         // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
@@ -208,6 +212,22 @@ $(function () {
                 sendPicAction(file, emit);
             })
         }
+        // 图片预览
+        function imageViewerShow(item) {
+            for (let i = 0; i < this.imageViewer.result.length; i++) {
+                const msgIdFlag = item.msg_id && this.imageViewer.result[i].msg_id === item.msg_id;
+                const msgKeyFlag = item.msgKey && this.imageViewer.result[i].msgKey === item.msgKey;
+                if (msgIdFlag || msgKeyFlag) {
+                    this.imageViewer.active = Util.deepCopyObj(this.imageViewer.result[i]);
+                    this.imageViewer.active.index = i;
+                    break;
+                }
+            }
+            this.imageViewer.show = true;
+            this.viewer = this.imageViewer;
+        }
+
+
 
         //获取对话列表
         async function getConversation() {

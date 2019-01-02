@@ -24,6 +24,9 @@ const apiService = {
     sendSingleMsg:function (singleMsg = {}, success, error, timeout) {
         return this.callback(JIM.sendSingleMsg(singleMsg), success, error, timeout);
     },
+    sendSinglePic:function (singlePic = {}, success, error, timeout) {
+        return this.callback(JIM.sendSinglePic(singlePic), success, error, timeout);
+    },
     downloadThumbUserAvatar:function (myAvatar = {}, success, error, timeout) {
         return this.callback(JIM.downloadThumbUserAvatar(myAvatar), success, error, timeout);
     },

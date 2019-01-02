@@ -1228,7 +1228,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                 });
                 // 获取messageList avatar url
                 this.store$.dispatch({
-                    type: chatAction.getMemberAvatarUrl,
+                    type: chatAction.,
                     payload: {
                         active: this.active,
                         messageList: this.messageList,
