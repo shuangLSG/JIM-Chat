@@ -6,6 +6,13 @@ $(function () {
                 messageList: [],
                 newMessage: {}
             },
+            imageViewer = {
+                result: [],
+                active: {
+                    index: -1
+                },
+                show: false,
+            },
             userInfo = {
                 avatarUrl: ""
             },
@@ -58,7 +65,7 @@ $(function () {
                             msgs = data;
                         }
                         const json = {
-                            msgs: msgs.slice(0,pageNumber),//下拉刷新需要加载成dom的列表
+                            msgs: msgs.slice(0, pageNumber), //下拉刷新需要加载成dom的列表
                             global: global
                         }
                         $('.message ul').prepend(template('test', json));
@@ -213,7 +220,7 @@ $(function () {
             })
         }
 
-        // ============================           逻辑
+        // ============================      获取离线消息
         function creatChatPanel(data) {
             getAllMessage(data).then(data => {
                 // 获取客服的离线消息
@@ -249,12 +256,41 @@ $(function () {
 
                         $('.message ul').html(template('test', json));
                         scrollBottom(); // 滚动到底部
-                    })
+                        
+                        return data;
+                    }).then(getsourceurl => {
+                        // 图片预览的处理
+                       let imgResult =  filterImageViewer(getsourceurl);
+                       console.log(getsourceurl)
+                       console.log(imgResult)
+                    });
                 })
-
-            });
+            })
         }
-
+        // 过滤出当前图片预览的数组
+        function filterImageViewer(messageList) {
+            // let messageList = data[activeIndex];
+            if (activeIndex < 0 || !messageList || !messageList.msgs) {
+                return [];
+            }
+            let imgResult = [];
+            let msgs = messageList.msgs;
+            for (let message of msgs) {
+                let content = message.content;
+                const jpushEmoji = (!content.msg_body.extras || !content.msg_body.extras.kLargeEmoticon ||
+                    content.msg_body.extras.kLargeEmoticon !== 'kLargeEmoticon');
+                if (content.msg_type === 'image' && jpushEmoji) {
+                    imgResult.push({
+                        mediaId: content.msg_body.media_id,
+                        src: content.msg_body.media_url,
+                        width: content.msg_body.width,
+                        height: content.msg_body.height,
+                        msg_id: message.msg_id
+                    });
+                }
+            }
+            return imgResult;
+        }
 
         // ==========================================页面事件操作
         // 发送文本信息
@@ -377,6 +413,7 @@ $(function () {
                 }
                 resolve(data);
                 ChatStore.messageList = data;
+
             })
         }
 
@@ -473,6 +510,7 @@ $(function () {
                 }
                 setTimeout(function () {
                     resolve(msgs);
+                    ChatStore.messageList = msgs;
                 }, 600)
             })
         }
