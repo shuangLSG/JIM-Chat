@@ -7,7 +7,7 @@
 		<meta name="apple-mobile-web-app-capable" content="yes">
 		<meta name="apple-mobile-web-app-status-bar-style" content="black">
 		<!--标准mui.css-->
-		<link rel="stylesheet" href="../css/mui.min.css">
+		<link rel="stylesheet" href="css/mui.min.css">
 		<!--App自定义的css-->
 		<style type="text/css">
 			.mui-preview-image.mui-fullscreen {
@@ -174,16 +174,38 @@
 			<div class="mui-content-padded">
 				<p>这是图片放大预览示例，点击如下图片体验全屏预览功能</p>
 				<p>
-					<img src="../images/yuantiao.jpg" data-preview-src="" data-preview-group="1" />
+					<img src="header01.png" data-preview-src="" data-preview-group="1" />
 				</p>
 				<p>图片全屏后，双击或双指缩放均可对图片进行放大、缩小操作，左右滑动可查看同组(data-preview-group相同的图片为一组)其它图片，点击会关闭预览</p>
 				<p>
-					<img src="../images/muwu.jpg" data-preview-src="" data-preview-group="1" />
+					<img src="header01.png" data-preview-src="" data-preview-group="1" />
 				</p>
 				<p>第三张图片，纯粹为了占位： </p>
 				<p>
-					<img src="../images/shuijiao.jpg" data-preview-src="" data-preview-group="1" />
+					<img src="header01.png" data-preview-src="" data-preview-group="1" />
 				</p>
+			</div>
+		</div>
+
+
+		<div id="__MUI_PREVIEWIMAGE" class="mui-slider mui-preview-image mui-fullscreen mui-preview-in" data-slider="2" style="display: block;">
+			<div class="mui-preview-header">
+				<span class="mui-preview-indicator">1/2</span>
+			</div>
+			<div class="mui-slider-group" style="transform: translate3d(0px, 0px, 0px) translateZ(0px); transition-duration: 0ms; transition-timing-function: cubic-bezier(0.165, 0.84, 0.44, 1);">
+				<div class="mui-slider-item mui-zoom-wrapper mui-active" data-zoomer="4">
+					<div class="mui-zoom-scroller">
+						<img src="http://dlop.im.jiguang.cn/qiniu/image/j/60FFA8C51CA53912F6870566D34CF591.png?e=1546482146&amp;token=pNf8Uh3lsdBw4BGIUE1tgWT8dPKDDyzuOGEgtEJi:105QyIMhgYcs39e8FApNThJK5JY=" data-preview-lazyload="" style="" class="mui-zoom">
+					</div>
+				</div>
+				<div class="mui-slider-item mui-zoom-wrapper" data-zoomer="3">
+					<div class="mui-zoom-scroller" style="transition-duration: 300ms; transform: translate3d(0px, 0px, 0px);">
+						<img src="http://dlop.im.jiguang.cn/qiniu/image/j/5A490CAF97E770F08595AB8BDA4B373B.peg?e=1546482146&amp;token=pNf8Uh3lsdBw4BGIUE1tgWT8dPKDDyzuOGEgtEJi:KvPHhkVjEPWS9RBaMznYYdrkNhY=" data-preview-lazyload="" style="transition-duration: 300ms; transform: translate3d(0px, 0px, 0px) scale(1);" class="mui-zoom">
+					</div>
+				</div>
+			</div>
+			<div class="mui-preview-footer mui-hidden"></div>
+			<div class="mui-preview-loading"><span class="mui-spinner mui-spinner-white"></span>
 			</div>
 		</div>
 	</body>

@@ -109,7 +109,7 @@
                                 height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
                                     (i.content.msg_body.width/i.content.msg_body.height < 219/300 ? 300 + 'px' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
                                     : i.content.msg_body.height/37.5/2+'rem'}}">
-                                    <img (load)="imgLoaded(i)" title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
                                 </div>
                             </div>
                         {{/if}}
@@ -138,7 +138,7 @@
                                 height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
                                     (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
                                     : i.content.msg_body.height/37.5/2+'rem'}}">
-                                    <img (load)="imgLoaded(i)" title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                    <img title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src=""  alt="">
                                 </div>
                             </div>
                         {{/if}}
@@ -171,9 +171,12 @@
                 </div> 
                 <div class="image {{!content.msg_body.loading?'img-loading':''}}"
                 style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
-                (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                :content.msg_body.width/37.5/2+'rem'}}">
-                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
+                (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height*3 + 'rem')
+                :content.msg_body.width/37.5/2+'rem'}};
+                height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
+                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219/37.5/2 + 'rem') 
+                    : content.msg_body.height/37.5/2+'rem'}}">
+                    <img  title="点击查看大图" data-msg_id="{{msg_id}}" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" data-preview-src="" alt="">
                 </div>
             </div>
         {{/if}}
@@ -202,12 +205,12 @@
                     </div> 
                     <div class="image {{!content.msg_body.loading?'img-loading':''}}"
                     style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
-                    (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
+                    (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height*3 + 'rem')
                     :content.msg_body.width/37.5/2+'rem'}};
                     height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
-                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219 + 'px') 
-                    : content.msg_body.height/37.5/2+'rem'}}">
-                        <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
+                        (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219/37.5/2 + 'rem') 
+                        : content.msg_body.height/37.5/2+'rem'}}">
+                        <img  title="点击查看大图" data-msg_id="{{msg_id}}" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" data-preview-src="" alt="">
                     </div>
                 </div>
             {{/if}}
@@ -219,6 +222,8 @@
 
 
     <script src="js/mui.min.js"></script>
+    <script src="js/mui.zoom.js"></script>
+	<script src="js/mui.previewimage.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
@@ -228,6 +233,8 @@
     <script src="js/xuqijin110.js"></script>
 
     <script>
+        mui.previewImage();
+        
 
         // 底部操作菜单
         var menuWrapper = document.getElementById("menu-wrapper");

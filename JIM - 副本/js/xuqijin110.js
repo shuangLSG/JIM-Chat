@@ -2,11 +2,11 @@ $(function () {
     (function (mui, $) {
         var hasOffline = 0;
         var ChatStore = {
-            conversation: [],
-            messageList: [],
-            newMessage: {},
-            imageViewer: []
-        },
+                conversation: [],
+                messageList: [],
+                newMessage: {},
+                imageViewer: []
+            },
             imageViewer = {
                 result: [],
                 active: {
@@ -18,7 +18,7 @@ $(function () {
                 avatarUrl: ""
             },
             sourceUrl = '',
-            imgviewindex=-1,// 当前预览图片的索引
+            imgviewindex = -1, // 当前预览图片的索引
             activeIndex = 0, // 目标用户在会话列表的索引 
             msgKey = 1; // 有用到
         /** ============== mui ==================*/
@@ -31,9 +31,6 @@ $(function () {
                 container: '#pullrefresh',
                 down: {
                     style: 'circle',
-                    contentdown: "下拉可以刷新", //可选，在下拉可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentover: "释放立即刷新", //可选，在释放可刷新状态时，下拉刷新控件上显示的标题内容
-                    contentrefresh: "正在刷新...", //可选，正在刷新状态时，下拉刷新控件上显示的标题内容
                     callback: pulldownRefresh, // ajax 具体操作
                 }
             }
@@ -72,16 +69,21 @@ $(function () {
                             global: global
                         }
                         $('.message ul').prepend(template('test', json));
-                        scrollBottom(); // 滚动到底部
                     })
                 });
                 mui('#pullrefresh').pullRefresh().endPulldownToRefresh(true);
             }, 1500)
         }
-        // 不能用这个方法，会出现两个滚动条
+        var deceleration = mui.os.ios ? 0.003 : 0.0009;
+        //初始化滚动组件
+        mui('.mui-scroll-wrapper').scroll({
+            bounce: true,
+            indicators: false, //是否显示滚动条
+            deceleration: deceleration
+        });
         function scrollBottom() {
-            // mui('.mui-scroll-wrapper').scroll().reLayout();
-            // mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
+            mui('.mui-scroll-wrapper').scroll().reLayout();
+            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
 
         /** =================================== 
@@ -300,7 +302,9 @@ $(function () {
         }
         // 加载预览图片的图片url
         async function loadViewerImage(info) {
-            const urlObj = { media_id: info.mediaId };
+            const urlObj = {
+                media_id: info.mediaId
+            };
             const data = await apiService.getResource(urlObj);
             if (data.code) {
                 this.errorFn(data);
@@ -308,9 +312,10 @@ $(function () {
                 info.src = data.url;
                 // 加载图片预览没有加载的图片url
                 // ChatStore.viewerImageUrl = info;
-                // addImageUrl(info);
+                addImageUrl(info);
             }
         };
+
         function addImageUrl(viewerImageUrl) {
             for (let img of imageViewer.result) {
                 if (img.index === viewerImageUrl.index && img.src === viewerImageUrl.src) {
@@ -336,6 +341,7 @@ $(function () {
             console.log(imageViewer)
             // viewer = imageViewer;
         }
+
         function prev() {
             const activeIndex = imageViewer.active.index;
             const index = activeIndex > 0 ? activeIndex - 1 : activeIndex;
@@ -362,6 +368,7 @@ $(function () {
                 mui.toast('已经是第一张了');
             }
         }
+
         function next() {
             const activeIndex = imageViewer.active.index;
             const index = activeIndex < imageViewer.result.length - 1 ?
@@ -379,6 +386,7 @@ $(function () {
                 mui.toast('已经是最后一张了');
             }
         }
+
         function closeViewerAction(event) {
             this.imageViewer.show = false;
             this.closeImageViewer.emit();
@@ -410,7 +418,9 @@ $(function () {
         mui('.mui-scroll').on('tap', '.image img', function () {
             console.log(this)
             var msg_id = this.dataset.msg_id;
-            imageViewerShow({ msg_id: msg_id });
+            imageViewerShow({
+                msg_id: msg_id
+            });
         })
 
 
@@ -463,7 +473,7 @@ $(function () {
                             }
                             if (j + 1 !== dataItem.msgs.length) {
                                 if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                    dataItem.msgs[j + 1].ctime_ms)) {
+                                        dataItem.msgs[j + 1].ctime_ms)) {
                                     dataItem.msgs[j + 1].time_show =
                                         Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                                 }
