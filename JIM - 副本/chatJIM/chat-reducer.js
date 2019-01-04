@@ -16,18 +16,8 @@
 
 // 添加消息到消息面板
 function addMessage(state = ChatStore, payload,global) {
-    // 判断消息是否要显示时间
-    if (state.messageList.length === 0) {
-        payload.time_show = Util.reducerDate(payload.ctime_ms);
-    } else {
-        const fiveMinutes =
-            Util.fiveMinutes(state.messageList[state.messageList.length - 1].ctime_ms,
-                payload.ctime_ms);
-        if (fiveMinutes) {
-            payload.time_show = Util.reducerDate(payload.ctime_ms);
-        }
-    }
-    state.messageList.push(payload);
+    payload.msgs.ctime_ms = new Date().getTime();
+    payload = isShowTime(state, payload);
     // 接收到别人的消息添加到消息列表/同步自己发送的消息
     if (payload.messages && payload.messages[0]) {
         let message = payload.messages[0];
@@ -113,22 +103,15 @@ function addMyselfMesssge(state = ChatStore, payload,global) {
         return single;
     });
     if (result.length === 0) { // 当前暂无会话
-        payload.active.extras = {};
-        payload.msgs.conversation_time_show = 'today';
-        payload.active.recentMsg = payload.msgs;
+        payload.msgs.time_show = 'today';
+        payload = isShowTime(state, payload);
         let flag = true;
-        for (let message of state.messageList) {
-            message.msgs.push(payload.msgs);
-            flag = false;
-            break;
-        }
         if (flag) {
             state.messageList.push({
                 msgs: [payload.msgs],
                 type: 3,
-                name: payload.active.name,
-                // appkey: payload.active.appkey || authPayload.appkey
             });
+            state.newMessage ={ ...payload.msgs,avatarUrl:global.avatarUrl};            
         }
     } else {
         for (let messageList of state.messageList) {
@@ -157,7 +140,20 @@ function filterNewMessage(state,payload,message) {
         });
     }
 }
-
+function isShowTime(state, payload){
+    // 判断消息是否要显示时间
+    if (state.messageList.length === 0) {
+        payload.time_show = Util.reducerDate(payload.ctime_ms);
+    } else {
+        const fiveMinutes =
+            Util.fiveMinutes(state.messageList[state.messageList.length - 1].ctime_ms,
+                payload.ctime_ms);
+        if (fiveMinutes) {
+            payload.time_show = Util.reducerDate(payload.ctime_ms);
+        }
+    }
+    return payload;
+}
 // 新消息用户不在会话列表中
 function addMessageUserNoConversation(state = ChatStore, payload, message) {
     let msg;

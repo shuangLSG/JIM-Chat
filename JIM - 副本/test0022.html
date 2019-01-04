@@ -1,28 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>my1</title>
-    <script src="data.js"></script>
-    <link rel="stylesheet" href="css/mui.min.css">
-    <link rel="stylesheet" href="css/chat.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>my1</title>
+<script src="data.js"></script>
+<link rel="stylesheet" href="css/mui.min.css">
+<link rel="stylesheet" href="css/chat.css">
 
-    <style>
-        body {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
-        }
-        .mui-scroll-wrapper{
-            padding-bottom: 60px;
-        }
-    </style>
+<style>
+    body {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        -webkit-overflow-scrolling: touch;
+        /* 解决ios滑动不流畅问题 */
+    }
+
+    .mui-scroll-wrapper {
+        padding-bottom: 60px;
+    }
+
+    .mask-box {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        width: 100%;
+        z-index: 2;
+        display: none;
+    }
+</style>
 </head>
 
 <body>
@@ -33,7 +45,7 @@
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
-            <textarea class="margin-l-26"></textarea>
+            <textarea id="textarea" class="margin-l-26"></textarea>
             <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
             <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
         </div>
@@ -47,8 +59,7 @@
                         <div class="room-panel-send-file">
                             <div class="room-panel-item">
                                 <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
-                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic"
-                                        multiple="multiple">
+                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic" multiple="multiple">
                                     <p>图片</p>
                                 </label>
                             </div>
@@ -65,6 +76,7 @@
              </form> -->
     </footer>
     <div id="menu-backdrop" class="menu-backdrop"></div>
+    <div id="mask" class="mask-box"></div>
 
     <!-- 时间 -->
     <script id="room-panel-time" type="text/html">
@@ -105,8 +117,11 @@
                                 <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
                                 style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
                                 (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height * 300 + 'px')
-                                :i.content.msg_body.width + 'px'}}">
-                                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                :i.content.msg_body.width/37.5/2+'rem'}};
+                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
+                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ? 300 + 'px' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
+                                    : i.content.msg_body.height/37.5/2+'rem'}}">
+                                    <img (load)="imgLoaded(i)" title="点击查看大图" onClick="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
                                 </div>
                             </div>
                         {{/if}}
@@ -130,8 +145,11 @@
                                 </div> 
                                 <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
                                 style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
-                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height * 300 + 'px')
-                                :i.content.msg_body.width + 'px'}}">
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height*3 + 'rem')
+                                :i.content.msg_body.width/37.5/2+'rem'}};
+                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
+                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
+                                    : i.content.msg_body.height/37.5/2+'rem'}}">
                                     <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
                                 </div>
                             </div>
@@ -140,7 +158,7 @@
                 {{/if}}
             {{/each}}
     </script>
-    
+
     <!-- 别人发送的消息 -->
     <script id="recivemsg_text" type="text/html">
         <li>
@@ -166,7 +184,7 @@
                 <div class="image {{!content.msg_body.loading?'img-loading':''}}"
                 style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
                 (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                :content.msg_body.width + 'px'}}">
+                :content.msg_body.width/37.5/2+'rem'}}">
                     <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
                 </div>
             </div>
@@ -197,7 +215,10 @@
                     <div class="image {{!content.msg_body.loading?'img-loading':''}}"
                     style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
                     (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                    :content.msg_body.width + 'px'}}">
+                    :content.msg_body.width/37.5/2+'rem'}};
+                    height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
+                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219 + 'px') 
+                    : content.msg_body.height/37.5/2+'rem'}}">
                         <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
                     </div>
                 </div>
@@ -208,61 +229,90 @@
     <script src="js/rem.js"></script>
     <script src="js/template.js"></script>
 
-    <script src="js/common.js"></script>
-    <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
 
     <script src="js/mui.min.js"></script>
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
     <script src="chatJIM/util.js"></script>
-    <script src="chatJIM/main-effect.js"></script>
-    <script src="chatJIM/chat-effect.js"></script>
+    <script src="chatJIM/filter.js"></script>
     <script src="chatJIM/chat-reducer.js"></script>
-    <script src="chatJIM/self-info/self-info.js"></script>
-    <script src="js/test0022.js"></script>
+    <script src="js/my.1.js"></script>
 
     <script>
-        mui.init({
-            swipeBack: true //启用右滑关闭功能
+
+
+        var scroll = mui('.mui-scroll-wrapper').scroll({
+            bounce: false //是否启用回弹
         });
+
+        // 底部操作菜单
         var menuWrapper = document.getElementById("menu-wrapper");
         var menu = document.getElementById("menu");
         var menuWrapperClassList = menuWrapper.classList;
         var backdrop = document.getElementById("menu-backdrop");
-
-        backdrop.addEventListener('tap', toggleMenu);
+        backdrop.addEventListener('touchstart', toggleMenu);
         document.getElementById("menu-btn").addEventListener('tap', toggleMenu);
         //下沉菜单中的点击事件
         mui('#menu').on('tap', 'a', function () {
             toggleMenu();
         });
+        mui('.action').on('tap', 'textarea', function () {
+            if (menuWrapperClassList.contains('mui-active')) {
+                toggleMenuHide();
+            }
+        });
         var busying = false;
-
+        // 文字输入框
+        $('#textarea').focus(function () {
+            $('#mask').show();
+        });
+        // clickMask
+        document.querySelector('#mask').addEventListener('touchstart', clickMask);
+        function clickMask() {
+            $('#textarea').blur();
+            $('#mask').hide();
+        }
         function toggleMenu() {
             if (busying) {
                 return;
             }
             busying = true;
             if (menuWrapperClassList.contains('mui-active')) {
-                document.body.classList.remove('menu-open');
-                menuWrapper.className = 'menu-wrapper fade-out-down animated';
-                menu.className = 'menu bounce-out-down animated';
-                setTimeout(function () {
-                    backdrop.style.opacity = 0;
-                    menuWrapper.classList.add('hidden');
-                    $('#room-container').removeClass('menu-showed');
-                }, 500);
+                toggleMenuHide();
             } else {
-                document.body.classList.add('menu-open');
-                menuWrapper.className = 'menu-wrapper fade-in-up animated mui-active';
-                menu.className = 'menu bounce-in-up animated';
-                backdrop.style.opacity = 1;
-                $('#room-container').addClass('menu-showed');
+                toggleMenuShow();
             }
             setTimeout(function () {
                 busying = false;
             }, 500);
+        }
+
+        function toggleMenuHide() {
+            document.body.classList.remove('menu-open');
+            menuWrapper.className = 'menu-wrapper fade-out-down animated';
+            menu.className = 'menu bounce-out-down animated';
+            setTimeout(function () {
+                backdrop.style.opacity = 0;
+                menuWrapper.classList.add('hidden');
+                $('#room-container').removeClass('menu-showed');
+                // 布局
+                $('#pullrefresh').css('bottom', 0);
+                mui('.mui-scroll-wrapper').scroll().reLayout();
+                mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
+            }, 500);
+        }
+
+        function toggleMenuShow() {
+            document.body.classList.add('menu-open');
+            menuWrapper.className = 'menu-wrapper fade-in-up animated mui-active';
+            menu.className = 'menu bounce-in-up animated';
+            backdrop.style.opacity = 1;
+            $('#room-container').addClass('menu-showed');
+            // 布局
+            $('#pullrefresh').css('bottom', 7.23 + 'rem');
+            mui('.mui-scroll-wrapper').scroll().reLayout();
+            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
     </script>
 </body>

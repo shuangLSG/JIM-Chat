@@ -1,28 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>my1</title>
-    <script src="data.js"></script>
-    <link rel="stylesheet" href="css/mui.min.css">
-    <link rel="stylesheet" href="css/chat.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>my1</title>
+<script src="data.js"></script>
+<link rel="stylesheet" href="css/mui.min.css">
+<link rel="stylesheet" href="css/chat.css">
 
-    <style>
-        body {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            -webkit-overflow-scrolling: touch;/* 解决ios滑动不流畅问题 */
-        }
-        .mui-scroll-wrapper{
-            padding-bottom: 60px;
-        }
-    </style>
+<style>
+    body {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        -webkit-overflow-scrolling: touch;
+        /* 解决ios滑动不流畅问题 */
+    }
+
+    .mui-scroll-wrapper {
+        padding-bottom: 60px;
+    }
+
+    .mask-box {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        width: 100%;
+        z-index: 2;
+        display: none;
+    }
+</style>
 </head>
 
 <body>
@@ -33,7 +45,7 @@
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
-            <textarea class="margin-l-26"></textarea>
+            <textarea id="textarea" class="margin-l-26"></textarea>
             <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
             <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
         </div>
@@ -47,8 +59,7 @@
                         <div class="room-panel-send-file">
                             <div class="room-panel-item">
                                 <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
-                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic"
-                                        multiple="multiple">
+                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic" multiple="multiple">
                                     <p>图片</p>
                                 </label>
                             </div>
@@ -65,6 +76,7 @@
              </form> -->
     </footer>
     <div id="menu-backdrop" class="menu-backdrop"></div>
+    <div id="mask" class="mask-box"></div>
 
     <!-- 时间 -->
     <script id="room-panel-time" type="text/html">
@@ -228,8 +240,8 @@
     <script src="js/my.1.js"></script>
 
     <script>
-       
-        
+
+
         var scroll = mui('.mui-scroll-wrapper').scroll({
             bounce: false //是否启用回弹
         });
@@ -239,20 +251,29 @@
         var menu = document.getElementById("menu");
         var menuWrapperClassList = menuWrapper.classList;
         var backdrop = document.getElementById("menu-backdrop");
-
         backdrop.addEventListener('touchstart', toggleMenu);
-        document.getElementById("menu-btn").addEventListener('tap', toggleMenu);
+        document.getElementById("").addEventListener('tap', toggleMenu);
         //下沉菜单中的点击事件
         mui('#menu').on('tap', 'a', function () {
             toggleMenu();
         });
         mui('.action').on('tap', 'textarea', function () {
+            $('#mask').show();
             if (menuWrapperClassList.contains('mui-active')) {
                 toggleMenuHide();
             }
         });
-        var busying = false;
+       
+        // clickMask
+        document.querySelector('#mask').addEventListener('touchstart', clickMask);
+        function clickMask() {
+            $('#textarea').blur();
+            $('#mask').hide();
+        }
 
+
+
+        var busying = false;
         function toggleMenu() {
             if (busying) {
                 return;

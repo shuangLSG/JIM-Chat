@@ -1,51 +1,45 @@
 $(function () {
     (function (mui, $) {
 
-        var defaultAvatar = 'logo.png';
-
-
         /** ============== mui ==================*/
-        mui.init({
-            swipeBack: false, //启用右滑关闭功能
-        });
-        var scroll = mui('.mui-scroll-wrapper').scroll({
-            bounce: false //是否启用回弹
-        });
-
         function scrollBottom() {
             mui('.mui-scroll-wrapper').scroll().reLayout();
-            mui('.mui-scroll-wrapper').scroll().scrollToBottom(100);
+            mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
         }
 
+        /** =================================== 
+                           JIM
+        ======================================*/
         var hasOffline = 0;
         var ChatStore = {
-            conversation: [],
-            messageList: [],
-            newMessage: {}
-        },
+                conversation: [],
+                messageList: [],
+                newMessage: {}
+            },
             userInfo = {
                 avatarUrl: ""
             },
             msgKey = 1; // 有用到
-        /** =================================== 
-                           JIM
-        ======================================*/
+        
         window.JIM = new JMessage({
             debug: true
         });
         var global = {
-            username: "test0022",
+            username: "lsg222",
             password: '123456',
             nickname: 'supvp.',
             media_id: 'header01.png'
         }
         var targetUser = {
-            across_user: 'lsg222',
+            across_user: 'test0022',
         }
         var across_appkey = '4f7aef34fb361292c566a1cd';
 
         init();
-
+        //异常断线监听
+        JIM.onDisconnect(function () {
+            init();
+        }); 
         function register() {
             JIM.register({
                 ...global
@@ -139,6 +133,9 @@ $(function () {
                 // 获取会话列表
                 getConversation();
 
+                // 发送单聊自定义消息
+                // sendSingleCustom();
+
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
@@ -176,9 +173,9 @@ $(function () {
                 }
                 return info;
             }).then(info => {
-                getMemberAvatarUrl(info).then(msgs=>{
+                getMemberAvatarUrl(info).then(msgs => {
 
-                    getSourceUrl(msgs,info).then(info=>{
+                    getSourceUrl(msgs, info).then(info => {
                         const json = {
                             msgs: info,
                             global: global
@@ -190,6 +187,9 @@ $(function () {
                 })
             });
         }
+
+
+        // ==========================================页面事件操作
         // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
@@ -212,6 +212,22 @@ $(function () {
                 sendPicAction(file, emit);
             })
         }
+        // 图片预览
+        function imageViewerShow(item) {
+            for (let i = 0; i < this.imageViewer.result.length; i++) {
+                const msgIdFlag = item.msg_id && this.imageViewer.result[i].msg_id === item.msg_id;
+                const msgKeyFlag = item.msgKey && this.imageViewer.result[i].msgKey === item.msgKey;
+                if (msgIdFlag || msgKeyFlag) {
+                    this.imageViewer.active = Util.deepCopyObj(this.imageViewer.result[i]);
+                    this.imageViewer.active.index = i;
+                    break;
+                }
+            }
+            this.imageViewer.show = true;
+            this.viewer = this.imageViewer;
+        }
+
+
 
         //获取对话列表
         async function getConversation() {
@@ -232,7 +248,19 @@ $(function () {
             }
             ChatStore.conversation = info.conversations;
         }
-
+        // 发送单聊自定义消息
+        async function sendSingleCustom() {
+            const data = {
+                'target_username': targetUser.across_user,
+                'custom': {
+                    'id':75
+                },
+                'appkey': across_appkey,
+                'nead_receipt': true
+            }
+            const custom = await apiService.sendSingleCustom(data);
+            console.log(custom)
+        }
 
 
         // =============================== 离线消息
@@ -249,7 +277,7 @@ $(function () {
                         }
                         if (j + 1 !== dataItem.msgs.length) {
                             if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                dataItem.msgs[j + 1].ctime_ms)) {
+                                    dataItem.msgs[j + 1].ctime_ms)) {
                                 dataItem.msgs[j + 1].time_show =
                                     Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
                             }
@@ -283,7 +311,7 @@ $(function () {
             ChatStore.messageList = data;
             return data;
         }
-     
+
         // 获取messageList avatar url
         function getMemberAvatarUrl(info) {
             return new Promise((resolve) => {
@@ -320,7 +348,7 @@ $(function () {
                         }
                     });
                 }
-               
+
                 setTimeout(function () {
                     resolve(msgs);
                 }, 400)
@@ -410,22 +438,16 @@ $(function () {
 
 
         // 发送单聊图片
-        function sendSinglePic(img) {
-            JIM.sendSinglePic(img.singlePicFormData).onSuccess(msg => {
-                const payload = {
-                    msgs: img.msgs,
-                    type: 3,
-                }
-                addMessage(ChatStore, payload, global);
-                $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
-                scrollBottom(); // 滚动到底部
-                console.log(msg);
-            }).onFail(code => {
-                console.log(code)
-            })
+        async function sendSinglePic(img) {
+            const msg= apiService.sendSinglePic(img.singlePicFormData);
+            const payload = {
+                msgs: img.msgs,
+                type: 3,
+            }
+            addMessage(ChatStore, payload, global);
+            $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
+            scrollBottom(); // 滚动到底部
         }
-
-
 
         function sendPicAction(file, data) {
             const isNotImage = '选择的文件必须是图片';
@@ -537,13 +559,5 @@ $(function () {
                 }
             }
         }
-
-
-
-
-
-        //========================================  DOM
-
-
     })(mui, jQuery)
 })

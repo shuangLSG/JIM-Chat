@@ -1,30 +1,93 @@
 $(function () {
     (function (mui, $) {
-
-        var chatState = null,
-            defaultAvatar = 'logo.png';
-
-
-        /** ============== mui ==================*/
-        mui.init({
-            swipeBack: false, //启用右滑关闭功能
-        });
-        var scroll = mui('.mui-scroll-wrapper').scroll({
-            bounce: false //是否启用回弹
-        });
-
-        function scrollBottom() {
-            mui('.mui-scroll-wrapper').scroll().reLayout();
-            mui('.mui-scroll-wrapper').scroll().scrollToBottom(100);
-        }
-
         var hasOffline = 0;
         var ChatStore = {
-                conversation: []
+                conversation: [],
+                messageList: [],
+                newMessage: {},
+                imageViewer: []
+            },
+            imageViewer = {
+                result: [],
+                active: {
+                    index: -1
+                },
+                show: false,
             },
             userInfo = {
                 avatarUrl: ""
+            },
+            sourceUrl = '',
+            imgviewindex = -1, // 当前预览图片的索引
+            activeIndex = 0, // 目标用户在会话列表的索引 
+            msgKey = 1; // 有用到
+        /** ============== mui ==================*/
+
+        var pageNumber = 20;
+        var loadingCount = 1;
+        mui.init({
+            swipeBack: false, //启用右滑关闭功能
+            pullRefresh: {
+                container: '#pullrefresh',
+                down: {
+                    style: 'circle',
+                    callback: pulldownRefresh, // ajax 具体操作
+                }
             }
+        });
+
+        function pulldownRefresh() {
+
+            setTimeout(function () {
+
+                // 第二页： 21/40
+                let msgs = ChatStore.messageList[activeIndex].msgs;
+                if (msgs.length <= pageNumber * loadingCount) {
+                    flage = false;
+                    mui("#pullrefresh").pullRefresh().disablePulldownToRefresh();
+
+                } else {
+                    // 48/40
+                    flage = true;
+                    loadingCount++;
+
+                    const info = {
+                        messageList: ChatStore.messageList,
+                        active: {
+                            activeIndex: activeIndex
+                        },
+                        loadingCount: loadingCount
+                    }
+                    getMemberAvatarUrl(info).then(msgs => {
+                        getSourceUrl(info).then(data => {
+                            if (data && data.length > pageNumber * loadingCount) {
+                                // 取列表的后几位
+                                msgs = data.slice(data.length - pageNumber * loadingCount);
+                                console.log(data.length - pageNumber * loadingCount)
+                                console.log(msgs)
+                            } else if (data && data.length <= pageNumber) {
+                                msgs = data;
+                            }
+                            const json = {
+                                msgs: msgs.slice(0, pageNumber), //下拉刷新需要加载成dom的列表
+                                global: global
+                            }
+                            $('.message ul').prepend(template('test', json));
+                            // scrollBottom(); // 滚动到底部
+                        })
+                    });
+                    mui("#pullrefresh").pullRefresh().endPulldownToRefresh(true);
+                }
+            }, 100)
+        }
+
+        function scrollBottom() {
+            mui('#pullrefresh').pullRefresh().refresh(true);
+            mui('.mui-scroll-wrapper').scroll().reLayout();
+            mui('#pullrefresh').scroll().scrollToBottom(10);
+        }
+
+
         /** =================================== 
                            JIM
         ======================================*/
@@ -32,17 +95,22 @@ $(function () {
             debug: true
         });
         var global = {
-            username: "lsg222",
+            username: "lsg332",
             password: '123456',
             nickname: 'supvp.',
-            media_id: 'logo.png'
+            media_id: 'header01.png'
         }
         var targetUser = {
-            across_user: 'test0022',
+            across_user: 'lsg222',
         }
-        var appkey = '5244aea56672ae685d799270';
+        var across_appkey = '4f7aef34fb361292c566a1cd';
 
         init();
+        //异常断线监听
+        JIM.onDisconnect(function () {
+            console.log('异常断线监听----')
+            init();
+        });
 
         function register() {
             JIM.register({
@@ -63,6 +131,7 @@ $(function () {
                 "timestamp": 1507882399401,
                 "flag": 1
             }).onSuccess(function (data) {
+                register()
                 login();
                 hasOffline = 0;
             }).onFail(function (data) {
@@ -75,7 +144,7 @@ $(function () {
         function receiveSingleMessage(data) {
             console.log(data)
             const content = data.messages[0].content;
-            const result = chatState.conversations.filter((conversation) => {
+            const result = ChatStore.conversation.filter((conversation) => {
                 return data.messages[0].content.from_id === conversation.name;
             });
             if (result.length === 0) {
@@ -85,7 +154,8 @@ $(function () {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
-            receiveSingleMsgDom(data.messages[0]);
+            $('.messge ul').append(template('recivemsg_text', data.messages[0]))
+            scrollBottom(); // 滚动到底部
         }
         // 获取新消息的用户头像url
         function getMsgAvatarUrl(messages) {
@@ -136,6 +206,9 @@ $(function () {
                 // 获取会话列表
                 getConversation();
 
+                // 发送单聊自定义消息
+                // sendSingleCustom();
+
 
                 //离线消息同步监听
                 JIM.onSyncConversation(function (data) {
@@ -155,11 +228,11 @@ $(function () {
             })
         }
 
-        // ============================           逻辑
+        // ============================      获取离线消息
         function creatChatPanel(data) {
             getAllMessage(data).then(data => {
                 // 获取客服的离线消息
-                var activeIndex = null;
+
                 data.forEach((item, index) => {
                     if (item.from_username == targetUser.across_user) {
                         activeIndex = index;
@@ -169,116 +242,201 @@ $(function () {
                     messageList: data,
                     active: {
                         activeIndex: activeIndex || 0
-                    }
+                    },
+                    loadingCount: loadingCount
                 }
                 return info;
             }).then(info => {
+
                 getMemberAvatarUrl(info).then(msgs => {
-                    const json = {
-                        msgs: msgs,
-                        global: global
-                    }
-                    chatPanelDom(json);
+
+                    getSourceUrl(info).then(data => {
+                        if (data && data.length > pageNumber) {
+                            msgs = data.slice(data.length - pageNumber);
+                        } else if (data && data.length <= pageNumber) {
+                            msgs = data;
+                        }
+                        const json = {
+                            msgs: msgs,
+                            global: global
+                        }
+                        console.log(json)
+
+                        $('.message ul').html(template('test', json));
+                        scrollBottom(); // 滚动到底部
+                        // 设置初始化时 下拉加载的滚动条在顶部的bug！
+                        let top = mui('#pullrefresh').scroll().y;
+                        mui('#pullrefresh').pullRefresh().scrollTo(0, top, 300);
+
+                        // 图片预览的处理
+                        let imgResult = filterImageViewer();
+                        imageViewer.result = imgResult;
+                        console.log(imgResult)
+                    })
                 })
-            });
-
-
-
-            // getMemberAvatarUrl(info, function (result) {
-            //     var json = {
-            //         msgs: result,
-            //         global: global
-            //     }
-            //     setTimeout(function () {
-            //         chatPanelDom(json);
-            //     }, 400)
-            // });
-
+            })
         }
+
+        /**
+         * ========================
+         *        图片预览
+         * ========================
+         */
+        // 过滤出当前图片预览的数组
+        function filterImageViewer() {
+            let messageList = ChatStore.messageList[activeIndex];
+            if (activeIndex < 0 || !messageList || !messageList.msgs) {
+                return [];
+            }
+            let imgResult = [];
+            let msgs = messageList.msgs;
+            for (let message of msgs) {
+                let content = message.content;
+                const jpushEmoji = (!content.msg_body.extras || !content.msg_body.extras.kLargeEmoticon ||
+                    content.msg_body.extras.kLargeEmoticon !== 'kLargeEmoticon');
+                if (content.msg_type === 'image' && jpushEmoji) {
+                    imgResult.push({
+                        mediaId: content.msg_body.media_id,
+                        src: content.msg_body.media_url,
+                        width: content.msg_body.width,
+                        height: content.msg_body.height,
+                        msg_id: message.msg_id
+                    });
+                }
+            }
+            return imgResult;
+        }
+        // 加载预览图片的图片url
+        async function loadViewerImage(info) {
+            const urlObj = {
+                media_id: info.mediaId
+            };
+            const data = await apiService.getResource(urlObj);
+            if (data.code) {
+                this.errorFn(data);
+            } else {
+                info.src = data.url;
+                // 加载图片预览没有加载的图片url
+                // ChatStore.viewerImageUrl = info;
+                // addImageUrl(info);
+            }
+        };
+
+        function addImageUrl(viewerImageUrl) {
+            for (let img of imageViewer.result) {
+                if (img.index === viewerImageUrl.index && img.src === viewerImageUrl.src) {
+                    img.src = viewerImageUrl.src;
+                    imageViewer.active = Util.deepCopyObj(imageViewer.result[imgviewindex]);
+                    imageViewer.active.index = imgviewindex;
+                    break;
+                }
+            }
+        }
+        // 图片预览
+        function imageViewerShow(item) {
+            for (let i = 0; i < imageViewer.result.length; i++) {
+                const msgIdFlag = item.msg_id && imageViewer.result[i].msg_id == item.msg_id;
+                // const msgKeyFlag = item.msgKey && imageViewer.result[i].msgKey === item.msgKey;
+                if (msgIdFlag) {
+                    imageViewer.active = Util.deepCopyObj(imageViewer.result[i]);
+                    imageViewer.active.index = i;
+                    break;
+                }
+            }
+            imageViewer.show = true;
+            console.log(imageViewer)
+            // viewer = imageViewer;
+        }
+
+        function prev() {
+            const activeIndex = imageViewer.active.index;
+            const index = activeIndex > 0 ? activeIndex - 1 : activeIndex;
+            imgviewindex = index;
+            if (imgviewindex !== activeIndex) {
+                // 如果该图片的url尚未加载，则去请求url
+                if (!imageViewer.result[index].src) {
+                    // this.imgHidden = true;
+                    // this.store$.dispatch({
+                    //     type: chatAction.loadViewerImage,
+                    //     payload: this.imageViewer.result[index]
+                    // });
+                } else {
+                    // 为了解决相邻两张相同的base64图片不触发onload事件
+                    if (imageViewer.active.src === imageViewer.result[index].src) {
+                        this.imgHidden = false;
+                    } else {
+                        this.imgHidden = true;
+                    }
+                    imageViewer.active = Object.assign({}, imageViewer.result[index], {});
+                    imageViewer.active.index = index;
+                }
+            } else {
+                mui.toast('已经是第一张了');
+            }
+        }
+
+        function next() {
+            const activeIndex = imageViewer.active.index;
+            const index = activeIndex < imageViewer.result.length - 1 ?
+                activeIndex + 1 : activeIndex;
+            if (index !== activeIndex) {
+                // 为了解决相邻两张相同的base64图片不触发onload事件
+                if (imageViewer.active.src === imageViewer.result[index].src) {
+                    this.imgHidden = false;
+                } else {
+                    this.imgHidden = true;
+                }
+                imageViewer.active = Object.assign({}, imageViewer.result[index], {});
+                imageViewer.active.index = index;
+            } else {
+                mui.toast('已经是最后一张了');
+            }
+        }
+
+        function closeViewerAction(event) {
+            this.imageViewer.show = false;
+            this.closeImageViewer.emit();
+            event.stopPropagation();
+        }
+        // ==========================================页面事件操作
         // 发送文本信息
         document.querySelector('.action').addEventListener('tap', function (e) {
             var oTarget = e.target;
             if (oTarget.id == 'test-send') {
-                sendSingleMsg().then(info => {
-                    sendSingleMsgDom(info);
-                })
+                $('#textarea').focus();
+                $('#mask').show();
+                sendSingleMsg();
             }
         });
+        // 发送图片信息
+        var oimg = document.querySelector('#sendPic2');
+        var PicURL = window.URL || window.webkitURL;
+        if (PicURL) {
+            // 给input添加监听
+            $(oimg).change(function () {
+                var file = oimg;
+                let img = Util.getFileFormData(oimg);
+                const emit = {
+                    img: img,
+                    type: "send"
+                }
+                sendPicAction(file, emit);
+            })
+        }
+        mui('.mui-scroll').on('tap', '.image img', function () {
+            console.log(this)
+            var msg_id = this.dataset.msg_id;
+            imageViewerShow({
+                msg_id: msg_id
+            });
+        })
 
 
 
         //获取对话列表
-        function getConversation() {
-            apiService.getConversation().then((info) => {
-                // 加载会话头像
-                for (let conversation of info.conversations) {
-                    if (conversation.avatar && conversation.avatar !== '') {
-                        const urlObj = {
-                            media_id: conversation.avatar
-                        };
-                        JIM.getResource({
-                            ...urlObj
-                        }).onSuccess(function (urlInfo) {
-                            if (!urlInfo.code) {
-                                conversation.avatarUrl = urlInfo.url;
-                            }
-                        })
-                    }
-                }
-                chatState = info;
-                console.log(chatState)
-            })
-        }
-
-
-
-        // =============================== 离线消息
-        // 获取所有漫游同步消息
-        async function getAllMessage(data) {
-
-            for (let dataItem of data) {
-                // 时间显示方式
-                for (let j = 0; j < dataItem.msgs.length; j++) {
-                    if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
-                        if (j === 0) {
-                            dataItem.msgs[j].time_show =
-                                Util.reducerDate(dataItem.msgs[j].ctime_ms);
-                        }
-                        if (j + 1 !== dataItem.msgs.length) {
-                            if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
-                                    dataItem.msgs[j + 1].ctime_ms)) {
-                                dataItem.msgs[j + 1].time_show =
-                                    Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
-                            }
-                        }
-                    }
-                }
-                for (let receiptMsg of dataItem.receipt_msgs) {
-                    for (let message of dataItem.msgs) {
-                        if (receiptMsg.msg_id === message.msg_id) {
-                            message.unread_count = receiptMsg.unread_count;
-                            break;
-                        }
-                    }
-                }
-                if (dataItem.msgs.length > 0) {
-                    if (dataItem.msgs[0].msg_type === 3) {
-                        dataItem.type = 3;
-                        if (dataItem.msgs[0].content.from_id === global.username) {
-                            dataItem.name = dataItem.msgs[0].content.target_id;
-                            dataItem.appkey = dataItem.msgs[0].content.target_appkey;
-
-                        } else if (dataItem.msgs[0].content.target_id === global.username) {
-                            dataItem.name = dataItem.msgs[0].content.from_id;
-                            dataItem.appkey = dataItem.msgs[0].content.from_appkey;
-                        }
-                    } else if (dataItem.msgs[0].msg_type === 4) {
-                        dataItem.type = 4;
-                    }
-                }
-            }
+        async function getConversation() {
             const info = await apiService.getConversation();
-            ChatStore.conversation = info.conversations;
+
             // 加载会话头像
             for (let conversation of info.conversations) {
                 if (conversation.avatar && conversation.avatar !== '') {
@@ -292,20 +450,107 @@ $(function () {
                     });
                 }
             }
-            return data;
+            ChatStore.conversation = info.conversations;
         }
+        // 发送单聊自定义消息
+        async function sendSingleCustom() {
+            const data = {
+                'target_username': targetUser.across_user,
+                'custom': {
+                    'id': 75
+                },
+                'appkey': across_appkey,
+                'nead_receipt': true
+            }
+            const custom = await apiService.sendSingleCustom(data);
+            console.log(custom)
+        }
+
+
+        // =============================== 离线消息
+        // 获取所有漫游同步消息
+        function getAllMessage(data) {
+            return new Promise((resolve) => {
+                for (let dataItem of data) {
+                    // 时间显示方式
+                    for (let j = 0; j < dataItem.msgs.length; j++) {
+                        if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
+                            if (j === 0) {
+                                dataItem.msgs[j].time_show =
+                                    Util.reducerDate(dataItem.msgs[j].ctime_ms);
+                            }
+                            if (j + 1 !== dataItem.msgs.length) {
+                                if (Util.fiveMinutes(dataItem.msgs[j].ctime_ms,
+                                        dataItem.msgs[j + 1].ctime_ms)) {
+                                    dataItem.msgs[j + 1].time_show =
+                                        Util.reducerDate(dataItem.msgs[j + 1].ctime_ms);
+                                }
+                            }
+                        }
+                    }
+                    for (let receiptMsg of dataItem.receipt_msgs) {
+                        for (let message of dataItem.msgs) {
+                            if (receiptMsg.msg_id === message.msg_id) {
+                                message.unread_count = receiptMsg.unread_count;
+                                break;
+                            }
+                        }
+                    }
+                    if (dataItem.msgs.length > 0) {
+                        if (dataItem.msgs[0].msg_type === 3) {
+                            dataItem.type = 3;
+                            if (dataItem.msgs[0].content.from_id === global.username) {
+                                dataItem.name = dataItem.msgs[0].content.target_id;
+                                dataItem.appkey = dataItem.msgs[0].content.target_appkey;
+
+                            } else if (dataItem.msgs[0].content.target_id === global.username) {
+                                dataItem.name = dataItem.msgs[0].content.from_id;
+                                dataItem.appkey = dataItem.msgs[0].content.from_appkey;
+                            }
+                        } else if (dataItem.msgs[0].msg_type === 4) {
+                            dataItem.type = 4;
+                        }
+                    }
+                }
+                resolve(data);
+                ChatStore.messageList = data;
+
+            })
+        }
+
         // 获取messageList avatar url
         function getMemberAvatarUrl(info) {
             return new Promise((resolve) => {
                 let userArr = [];
                 const msgs = info.messageList[info.active.activeIndex].msgs;
-                for (let i = 0; i < msgs.length; i++) {
+                const end = msgs.length - (info.loadingCount - 1) * pageNumber;
+                console.log(end, info.loadingCount, pageNumber)
+
+                for (let i = end - 1; i >= end - pageNumber && i >= 0 && end >= 1; i--) {
+                    // 如果是已经加载过头像的用户
+                    if (info.loadingCount !== 1) {
+                        let flag = false;
+                        for (let j = end; j < msgs.length; j++) {
+                            if (msgs[i].content.from_id === msgs[j].content.from_id) {
+                                if (msgs[j].content.avatarUrl) {
+                                    msgs[i].content.avatarUrl = msgs[j].content.avatarUrl;
+                                    flag = true;
+                                }
+                                break;
+                            }
+                        }
+                        if (flag) {
+                            continue;
+                        }
+                    }
+                    console.log(i)
                     msgs[i].content.avatarUrl = '';
                     if (msgs[i].content.from_id !== global.username &&
                         userArr.indexOf(msgs[i].content.from_id) < 0) {
                         userArr.push(msgs[i].content.from_id);
                     }
                 }
+
                 // 添加自己，设置头像
                 userArr.push(global.username);
 
@@ -330,11 +575,48 @@ $(function () {
                         }
                     });
                 }
+
                 setTimeout(function () {
                     resolve(msgs);
                 }, 400)
             })
         }
+        // 获取messageList 图片消息url
+        function getSourceUrl(info) {
+            return new Promise(async (resolve) => {
+                const msgs = info.messageList[info.active.activeIndex].msgs;
+                const end = msgs.length - (info.loadingCount - 1) * pageNumber;
+                // 滚动加载资源路径
+                if (end >= 1) {
+                    for (let i = end - 1; i >= end - pageNumber && i >= 0; i--) {
+                        const msgBody = msgs[i].content.msg_body;
+                        if (msgBody.media_id && !msgBody.media_url) {
+                            const urlObj = {
+                                media_id: msgBody.media_id
+                            };
+
+                            await apiService.getResource(urlObj).then((urlInfo) => {
+                                if (urlInfo.code) {
+                                    msgs[i].content.msg_body.media_url = '';
+                                } else {
+                                    sourceUrl = urlInfo.url;
+                                    msgs[i].content.msg_body.media_url = urlInfo.url;
+                                }
+                                console.log(i)
+                                console.log('图片url:' + urlInfo.url)
+                            });
+
+                        }
+
+                    }
+                }
+                setTimeout(function () {
+                    resolve(msgs);
+                    ChatStore.messageList[info.active.activeIndex].msgs = msgs;
+                }, 00)
+            })
+        }
+
 
         // 获取单聊信息
         function getSinglefMsg(data, username) {
@@ -372,42 +654,84 @@ $(function () {
         }
         // 发送新消息
         function sendSingleMsg(oTarget) {
-            return new Promise((resolve) => {
-                var content = $('.action textarea').val();
-                if (content == '') return;
-                JIM.sendSingleMsg({
-                    'target_username': targetUser.across_user,
-                    'appkey': targetUser.across_appkey,
-                    'content': content,
-                    'no_offline': false,
-                    'no_notification': false,
-                    need_receipt: true
-                }).onSuccess(function (data, msg) {
-                    console.log(data);
-                    console.log(msg);
-                    setTimeout(function () {
-                        resolve({ ...data,
-                            ...msg,
-                            avatarUrl: userInfo.avatarUrl
-                        });
-                    }, 400)
-                })
-            });
+            var content = $('.action textarea').val();
+            if (content == '') return;
+            JIM.sendSingleMsg({
+                'target_username': targetUser.across_user,
+                'appkey': across_appkey,
+                'content': content,
+                'no_offline': false,
+                'no_notification': false,
+                need_receipt: true
+            }).onSuccess(function (data, msg) {
+                const payload = {
+                    success: 3,
+                    type: 3,
+                    msgs: msg
+                }
+                addMessage(ChatStore, payload, global);
+                $('.message ul').append(template('send_singlemsg_text', ChatStore.newMessage))
+                scrollBottom(); // 滚动到底部
+                $('.action textarea').val('');
+            })
         }
-        // 发送图片
-        function sendPicAction(event) {
-            // 为了防止首次选择了文件，第二次选择文件的时候点击取消按钮时触发change事件的报错
-            if (!event.target.files[0]) {
-                return;
+
+
+        // 发送单聊图片
+        async function sendSinglePic(img) {
+            const msg = apiService.sendSinglePic(img.singlePicFormData);
+            const payload = {
+                msgs: img.msgs,
+                type: 3,
             }
-            let img = Util.getFileFormData(event.target);
-            this.sendPic.emit({
-                img,
-                type: 'send'
-            });
-            this.contentDiv.nativeElement.focus();
-            Util.focusLast(this.contentDiv.nativeElement);
-            event.target.value = '';
+            addMessage(ChatStore, payload, global);
+            $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
+            scrollBottom(); // 滚动到底部
+        }
+
+        function sendPicAction(file, data) {
+            const isNotImage = '选择的文件必须是图片';
+            Util.imgReader(file,
+                () => console.error(isNotImage),
+                (value) => {
+                    sendPicContent(value, data).then(img => {
+                        sendSinglePic(img)
+                    })
+                }
+            );
+        }
+
+        function sendPicContent(value, data) {
+            let msgs = {
+                content: {
+                    from_id: global.username,
+                    msg_type: 'image',
+                    msg_body: {
+                        media_url: value.src,
+                        width: value.width,
+                        height: value.height
+                    }
+                },
+                ctime_ms: new Date().getTime(),
+                success: 1,
+                unread_count: 0,
+                msgKey: msgKey++,
+            };
+            const singlePicFormData = {
+                target_username: targetUser.across_user,
+                appkey: across_appkey,
+                image: data.img,
+                need_receipt: true
+            };
+            msgs.singlePicFormData = singlePicFormData;
+            msgs.msg_type = 3;
+
+            return new Promise((resolve, reject) => {
+                resolve({
+                    singlePicFormData,
+                    msgs
+                });
+            })
         }
 
 
@@ -427,11 +751,7 @@ $(function () {
                 var avatarConfig = {
                     avatar: {
                         formData: fd,
-                        url: 'logo.png',
-                    },
-                    info: {
-                        nickname: '',
-                        username: 'lsg222'
+                        // url: 'logo.png',
                     }
                 }
                 updateSelfInfo(avatarConfig)
@@ -471,117 +791,9 @@ $(function () {
                 };
                 var urlInfo = await apiService.getResource(urlObj);
                 if (!urlInfo.code) {
-                    userInfo.avatarUrl = urlInfo.url;
+                    global.avatarUrl = urlInfo.url;
                 }
             }
-        }
-
-
-
-
-
-        //========================================  DOM
-
-        function chatPanelDom(data) {
-            console.log(data)
-            var html = '',
-                global = data.global;
-            $.each(data.msgs, function (index, i) {
-
-                // 文本消息
-                if (i.content && global.username != i.content.from_id && i.msg_type !== 5) {
-                    html += `<li>` + showTimeDom(i);
-                    if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
-                        html += `<div>
-                                    <div class="avatar-box">
-                                        <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
-                                    </div>   
-                                    <div class="text"><p>${i.content.msg_body.text}</p></div>
-                                </div>`;
-                    }
-                    html += `</li>`;
-                } else {
-                    html += `<li>` + showTimeDom(i);
-                    if (i.content.msg_type === 'text' && (!i.content.msg_body.extras || !i.content.msg_body.extras.businessCard)) {
-                        html += `<div class="self">
-                                        <div class="avatar-box">
-                                            <img class="avatar" src="${i.content.avatarUrl ? i.content.avatarUrl : 'logo.png'}" />
-                                        </div>   
-                                        <div class="text"><p>${i.content.msg_body.text}</p></div>
-                                    </div>`;
-                    }
-                    html += `</li>`;
-                }
-            })
-            $('.message ul').html(html);
-            scrollBottom(); // 滚动到底部
-        }
-        // 接受单聊文本消息
-        function receiveSingleMsgDom(data) {
-            console.log(data)
-            var html = '',
-                content = data.content;
-            // 文本消息
-            html += `<li>` + showTimeDom(data);
-            if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
-                html += `<div>
-                            <div class="avatar-box">
-                                <img class="avatar" src="${content.avatarUrl ? content.avatarUrl : 'logo.png'}" />
-                            </div>   
-                            <div class="text"><p>${content.msg_body.text}</p></div>
-                        </div>`;
-            }
-            html += `</li>`;
-            $('.message ul').append(html);
-            scrollBottom(); // 滚动到底部
-        }
-        // 发送单聊消息
-        function sendSingleMsgDom(data) {
-            console.log(data)
-            var html = '',
-                content = data.content;
-            // 文本消息
-            html += `<li>` + showTimeDom(data);
-            if (content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)) {
-                html += `<div class="self">
-                            <div class="avatar-box">
-                                <img class="avatar" src="${data.avatarUrl ? data.avatarUrl : 'logo.png'}" />
-                            </div>   
-                            <div class="text"><p>${content.msg_body.text}</p></div>
-                        </div>`;
-            }
-            html += `</li>`;
-            console.log(html);
-            $('.message ul').append(html);
-            // 清空 input
-            $('.action textarea').val('');
-            scrollBottom(); // 滚动到底部
-        }
-
-        function showTimeDom(data) {
-            var html = '<p class="time">',
-                ctime_ms = data.ctime_ms;
-            switch (data.time_show) {
-                case 'year':
-                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
-                    break;
-                case 'month':
-                    html += `<span>${dateFormat(ctime_ms, 'yyyy-MM-dd hh:mm')}</span>`
-                    break;
-                case 'day':
-                    html += `<span>${dateFormat(ctime_ms, 'dd hh:mm')}</span>`
-                    break;
-                case 'the day before':
-                    html += `<span>前天${dateFormat(ctime_ms, 'hh:mm')}</span>`
-                    break;
-                case 'yesterday':
-                    html += `<span>昨天${dateFormat(ctime_ms, 'hh:mm')}</span>`
-                    break;
-                case 'today':
-                    html += `<span>${dateFormat(ctime_ms, 'hh:mm')}</span>`
-                    break;
-            }
-            return html + '</p>';
         }
     })(mui, jQuery)
 })
