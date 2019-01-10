@@ -93,13 +93,13 @@ $(function () {
             debug: true
         });
         var global = {
-            username: "lsg222",
+            username: "test0022",
             password: '123456',
             nickname: 'supvp.',
             media_id: 'header01.png'
         }
         var targetUser = {
-            across_user: 'test0022',
+            across_user: 'lsg222',
 
         }
         var across_appkey = '4f7aef34fb361292c566a1cd';

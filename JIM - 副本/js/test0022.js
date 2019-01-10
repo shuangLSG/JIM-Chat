@@ -14,7 +14,8 @@ $(function () {
         var ChatStore = {
                 conversation: [],
                 messageList: [],
-                newMessage: {}
+                newMessage: {},
+                imageViewer: []
             },
             userInfo = {
                 avatarUrl: ""
@@ -76,13 +77,31 @@ $(function () {
             });
             if (result.length === 0) {
                 const messages = data.messages[0];
-                content = getMsgAvatarUrl(messages).content;
+                const msg = getMsgAvatarUrl(messages);               
+                content = msg.content;
             } else {
                 // 给已有的单聊用户添加头像()
                 content.avatarUrl = result[0].avatarUrl;
             }
-            $('.messge ul').append(template('recivemsg_text', data.messages[0]))
+            const urlObj = content.msg_body.media_id;
+            apiService.getResource(urlObj).then((urlInfo) => {
+                if (urlInfo.code) {
+                    content.msg_body.media_url = '';
+                } else {
+                    content.msg_body.media_url = urlInfo.url;
+                }
+            });
+          
+            const payload = {
+                success: 3,
+                type: 3,
+                messages: data.messages
+            }
+
+            addMessage(ChatStore, payload, global);
+            $('.message ul').append(template('recivemsg_text', ChatStore.newMessage))
             scrollBottom(); // 滚动到底部
+           
         }
         // 获取新消息的用户头像url
         function getMsgAvatarUrl(messages) {
@@ -148,10 +167,12 @@ $(function () {
 
                 setSelfAvatar();
 
-                JIM.onMsgReceive(function (data) {
-                    receiveSingleMessage(data);
+                JIM.onMsgReceive(receive_msg=>{
+                    receiveSingleMessage(receive_msg);
                 });
 
+              
+               
             })
         }
 

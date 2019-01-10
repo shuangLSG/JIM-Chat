@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>my1</title>
+<title>test0022</title>
 <script src="data.js"></script>
 <link rel="stylesheet" href="css/mui.min.css">
 <link rel="stylesheet" href="css/chat.css">
@@ -169,7 +169,23 @@
                         <img class="avatar" src="{{content.avatarUrl ? content.avatarUrl : 'logo.png'}}" />
                     </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
-                </div>    
+                </div> 
+            {{else if content.msg_type === 'image' || (content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon)}}
+                {{include 'room-panel-time' i}}
+                <div>
+                    <div class="avatar-box">
+                        <img class="avatar" src="{{content.avatarUrl ? content.avatarUrl : 'logo.png'}}" />
+                    </div> 
+                    <div class="image {{!content.msg_body.loading?'img-loading':''}}"
+                    style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
+                    (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
+                    :content.msg_body.width/37.5/2+'rem'}};
+                    height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
+                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219 + 'px') 
+                    : content.msg_body.height/37.5/2+'rem'}}">
+                        <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
+                    </div>
+                </div>   
             {{/if}}
         </li>
     </script>
@@ -200,7 +216,7 @@
                         <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
-                </div>  
+                </div>              
             {{/if}}
         </li>
     </script>
@@ -237,7 +253,7 @@
     <script src="chatJIM/util.js"></script>
     <script src="chatJIM/filter.js"></script>
     <script src="chatJIM/chat-reducer.js"></script>
-    <script src="js/my.1.js"></script>
+    <script src="js/test0022.js"></script>
 
     <script>
 

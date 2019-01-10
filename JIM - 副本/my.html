@@ -92,11 +92,11 @@
     <script id="room-panel-time" type="text/html">
         <p class="time">  
             {{if time_show==='year'}}
-            <span>{{ ctime_ms |dateFormat 'yyyy-MM-dd hh:mm'}}</span>
+            <span>{{ ctime_ms |dateFormat 'yyyy年MM月dd日 hh:mm'}}</span>
             {{else if time_show==='month'}}
-            <span>{{ ctime_ms |dateFormat 'MM-dd hh:mm'}}</span>
+            <span>{{ ctime_ms |dateFormat 'MM月dd日 hh:mm'}}</span>
             {{else if time_show==='day'}}
-            <span>{{ ctime_ms |dateFormat 'dd hh:mm'}}</span>
+            <span>{{ ctime_ms |dateFormat 'dd日 hh:mm'}}</span>
             {{else if time_show==='the day before'}}
             <span>前天 {{ ctime_ms |dateFormat 'hh:mm'}}</span>
             {{else if time_show==='yesterday'}}
@@ -239,6 +239,7 @@
     <script src="js/rem.js"></script>
     <script src="js/template.js"></script>
 
+    <script src="https://cdn.bootcss.com/blueimp-md5/2.10.0/js/md5.min.js"></script>
 
     <script src="js/mui.min.js"></script>
     <script src="js/mui.pullToRefresh.js"></script>

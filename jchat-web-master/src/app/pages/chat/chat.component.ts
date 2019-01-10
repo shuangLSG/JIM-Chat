@@ -560,7 +560,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                 this.conversationList = chatState.conversation;
                 break;
             case chatAction.emptyUnreadNumSyncEvent:
-                this.conversationList = ;
+                this.conversationList = chatState.conversation;
                 this.dispatchConversationUnreadNum(chatState);
                 break;
             // 转发消息成功(如果全部成功则为成功，有一个用户失败则不成功，会提示相关信息)
@@ -1228,7 +1228,7 @@ export class ChatComponent implements OnInit, OnDestroy {
                 });
                 // 获取messageList avatar url
                 this.store$.dispatch({
-                    type: chatAction.,
+                    type: chatAction.getMemberAvatarUrl,
                     payload: {
                         active: this.active,
                         messageList: this.messageList,

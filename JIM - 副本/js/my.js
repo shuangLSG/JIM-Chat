@@ -95,13 +95,11 @@ $(function () {
             debug: true
         });
         var global = {
-            username: "lsg332",
-            password: '123456',
-            nickname: 'supvp.',
-            media_id: 'header01.png'
+            username: "18302165686",
+            password: '18302165686',
         }
         var targetUser = {
-            across_user: 'lsg222',
+            across_user: 'lsg333',
         }
         var across_appkey = '4f7aef34fb361292c566a1cd';
 
@@ -114,8 +112,8 @@ $(function () {
 
         function register() {
             JIM.register({
-                ...global
-
+                ...global,
+                appkey: across_appkey
             }).onSuccess(function (data) {
                 console.log('注册 success:----------------------------------')
                 console.log(data);
@@ -123,13 +121,26 @@ $(function () {
         }
 
         function init() {
-            var time = new Date().getTime();
+            var timestamp = new Date().getTime();
+            var authPayload = {
+                appkey: '63a89786fa3f8f54130ee01b',
+                randomStr: '022cd9fd995849b58b3ef0e943421ed9',
+                masterSecret: '56727ef56e0dd5f30e6504fd',
+                timestamp: timestamp
+            }
             JIM.init({
-                "appkey": '4f7aef34fb361292c566a1cd',
-                "random_str": "404",
-                "signature": '7db047a67a9d7293850ac69d14cc82bf',
-                "timestamp": 1507882399401,
+                "appkey": authPayload.appkey,
+                "random_str": authPayload.randomStr,
+                "signature": md5(`appkey=${authPayload.appkey}&timestamp=${authPayload.timestamp}&random_str=${authPayload.randomStr}&key=${authPayload.masterSecret}`),
+                "timestamp": authPayload.timestamp,
                 "flag": 1
+                // var time = new Date().getTime();
+                // JIM.init({
+                //     "appkey": '4f7aef34fb361292c566a1cd',
+                //     "random_str": "404",
+                //     "signature": '7db047a67a9d7293850ac69d14cc82bf',
+                //     "timestamp": 1507882399401,
+                //     "flag": 1
             }).onSuccess(function (data) {
                 register()
                 login();
@@ -215,6 +226,7 @@ $(function () {
                     // 限制只触发一次
                     if (hasOffline === 0) {
                         hasOffline++;
+                        // creatChatPanel(data);
                         creatChatPanel(data);
                     }
                 });
@@ -225,6 +237,22 @@ $(function () {
                     receiveSingleMessage(data);
                 });
 
+
+                JIM.getUserInfo({
+                    username: "18037657994",
+                }).onSuccess(function (data) {
+                    console.log(data)
+                })
+                
+              /*  JIM.updateSelfPwd({
+                    'old_pwd' : 'xq123456',
+                    'new_pwd' : '18302165686',
+                  }).onSuccess(function(data) {
+                      //data.code 返回码
+                      //data.message 描述
+                  }).onFail(function(data) {
+                     //同上
+                  });*/
             })
         }
 
@@ -472,6 +500,14 @@ $(function () {
         function getAllMessage(data) {
             return new Promise((resolve) => {
                 for (let dataItem of data) {
+                    // 取出除自定义消息外的信息内容
+                    var filterData = [];
+                    for (let j = 0; j < dataItem.msgs.length; j++) {
+                        if (dataItem.msgs[j].content.msg_type !== 'custom') {
+                            filterData.push(dataItem.msgs[j]);
+                        }
+                    }
+                    dataItem.msgs = filterData;
                     // 时间显示方式
                     for (let j = 0; j < dataItem.msgs.length; j++) {
                         if (j + 1 < dataItem.msgs.length || dataItem.msgs.length === 1) {
@@ -488,33 +524,33 @@ $(function () {
                             }
                         }
                     }
-                    for (let receiptMsg of dataItem.receipt_msgs) {
-                        for (let message of dataItem.msgs) {
-                            if (receiptMsg.msg_id === message.msg_id) {
-                                message.unread_count = receiptMsg.unread_count;
-                                break;
-                            }
-                        }
-                    }
-                    if (dataItem.msgs.length > 0) {
-                        if (dataItem.msgs[0].msg_type === 3) {
-                            dataItem.type = 3;
-                            if (dataItem.msgs[0].content.from_id === global.username) {
-                                dataItem.name = dataItem.msgs[0].content.target_id;
-                                dataItem.appkey = dataItem.msgs[0].content.target_appkey;
 
-                            } else if (dataItem.msgs[0].content.target_id === global.username) {
-                                dataItem.name = dataItem.msgs[0].content.from_id;
-                                dataItem.appkey = dataItem.msgs[0].content.from_appkey;
-                            }
-                        } else if (dataItem.msgs[0].msg_type === 4) {
-                            dataItem.type = 4;
-                        }
-                    }
+                    // for (let receiptMsg of dataItem.receipt_msgs) {
+                    //     for (let message of dataItem.msgs) {
+                    //         if (receiptMsg.msg_id === message.msg_id) {
+                    //             message.unread_count = receiptMsg.unread_count;
+                    //             break;
+                    //         }
+                    //     }
+                    // }
+                    // if (dataItem.msgs.length > 0) {
+                    //     if (dataItem.msgs[0].msg_type === 3) {
+                    //         dataItem.type = 3;
+                    //         if (dataItem.msgs[0].content.from_id === global.username) {
+                    //             dataItem.name = dataItem.msgs[0].content.target_id;
+                    //             dataItem.appkey = dataItem.msgs[0].content.target_appkey;
+
+                    //         } else if (dataItem.msgs[0].content.target_id === global.username) {
+                    //             dataItem.name = dataItem.msgs[0].content.from_id;
+                    //             dataItem.appkey = dataItem.msgs[0].content.from_appkey;
+                    //         }
+                    //     } else if (dataItem.msgs[0].msg_type === 4) {
+                    //         dataItem.type = 4;
+                    //     }
+                    // }
                 }
                 resolve(data);
                 ChatStore.messageList = data;
-
             })
         }
 
@@ -757,6 +793,7 @@ $(function () {
                 updateSelfInfo(avatarConfig)
             })
         }
+        
         async function updateSelfInfo(self) {
             var data = await apiService.updateSelfInfo(self.info);
             if (data.code) {

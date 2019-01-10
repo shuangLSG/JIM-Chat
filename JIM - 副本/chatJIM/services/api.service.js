@@ -18,6 +18,9 @@ const apiService = {
     getConversation: function (success, error, timeout) {
         return this.callback(JIM.getConversation(), success, error, timeout);
     },
+    onMsgReceive: function (success, error, timeout) {
+        return this.callback(JIM.onMsgReceive(), success, error, timeout);
+    },
     getUserInfo: function (userInfoObj = {}, success, error, timeout) {
         return this.callback(JIM.getUserInfo(userInfoObj), success, error, timeout);
     },

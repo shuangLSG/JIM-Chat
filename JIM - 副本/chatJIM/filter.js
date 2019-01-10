@@ -15,8 +15,10 @@ function dateFormat(date, format) {
         var v = map[t];
         if (v !== undefined) {
             if (all.length > 1) {
-                v = '0' + v;
-                v = v.substr(v.length - 2);
+                // v = '0' + v;
+                console.log(v)
+                
+                v = v.toString().substr(v.length-2);
             }
             return v;
         } else if (t === 'y') {

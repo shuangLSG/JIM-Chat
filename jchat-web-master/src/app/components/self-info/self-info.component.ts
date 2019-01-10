@@ -156,7 +156,7 @@ export class SelfInfoComponent implements OnChanges {
         this.selfAvatarInput.nativeElement.value = '';
     }
     // 获取图片对象
-    private getImgObj(file) {
+    private getImgObj(file) { 
         const isNotImage = '选择的文件必须是图片';
         const imageTooSmall = '选择的图片宽或高的尺寸太小，请重新选择图片';
         Util.getAvatarImgObj(file,

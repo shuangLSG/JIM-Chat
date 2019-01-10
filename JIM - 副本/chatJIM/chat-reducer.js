@@ -16,8 +16,7 @@
 
 // 添加消息到消息面板
 function addMessage(state = ChatStore, payload,global) {
-    payload.msgs.ctime_ms = new Date().getTime();
-    payload = isShowTime(state, payload);
+    
     // 接收到别人的消息添加到消息列表/同步自己发送的消息
     if (payload.messages && payload.messages[0]) {
         let message = payload.messages[0];
@@ -65,15 +64,15 @@ function addMessage(state = ChatStore, payload,global) {
                     }
                 }
             }
-            let index = a;
-            if (!state.conversation[a].extras || !state.conversation[a].extras.top_time_ms) {
-                let item = state.conversation.splice(a, 1);
-                index = filterTopConversation(state, item[0]);
-            }
-            state.conversation[index].recentMsg = payload.messages[0];
-            payload.messages[0].conversation_time_show = 'today';
-            state.newMessageIsDisturb = state.conversation[index].noDisturb ? true : false;
-            break;
+            // let index = a;
+            // if (!state.conversation[a].extras || !state.conversation[a].extras.top_time_ms) {
+            //     let item = state.conversation.splice(a, 1);
+            //     index = filterTopConversation(state, item[0]);
+            // }
+            // state.conversation[index].recentMsg = payload.messages[0];
+            // payload.messages[0].conversation_time_show = 'today';
+            // state.newMessageIsDisturb = state.conversation[index].noDisturb ? true : false;
+            // break;
         }
 
         for (let messageList of state.messageList) {
@@ -92,8 +91,9 @@ function addMessage(state = ChatStore, payload,global) {
         state.newMessage = payload.messages[0];
     } else {
         // 自己发消息将消息添加到消息列表
+        payload.msgs.ctime_ms = new Date().getTime();
+        payload = isShowTime(state, payload);
         addMyselfMesssge(state, payload,global);
-
     }
 }
 // 添加自己发的消息到消息面板
@@ -129,9 +129,8 @@ function addMyselfMesssge(state = ChatStore, payload,global) {
 // 处理新消息
 function filterNewMessage(state,payload,message) {
     // 更新imageViewer的数组
-    const isSingleMessage = message.msg_type === 3 && message.content.from_id === targetUser.across_user;
     const isImage = message.content.msg_type === 'image';
-    if ((isSingleMessage) && isImage) {
+    if (isImage) {
         state.imageViewer.push({
             src: message.content.msg_body.media_url,
             width: message.content.msg_body.width,
