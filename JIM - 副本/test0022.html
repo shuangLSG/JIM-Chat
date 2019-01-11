@@ -59,7 +59,8 @@
                         <div class="room-panel-send-file">
                             <div class="room-panel-item">
                                 <label title="图片" for="sendPic2" class="room-panel-singlePic-label">
-                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic" multiple="multiple">
+                                    <input type="file" name="file" accept="image/*" id="sendPic2" class="room-panel-singlePic"
+                                        multiple="multiple">
                                     <p>图片</p>
                                 </label>
                             </div>
@@ -121,7 +122,7 @@
                                 height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
                                     (i.content.msg_body.width/i.content.msg_body.height < 219/300 ? 300 + 'px' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
                                     : i.content.msg_body.height/37.5/2+'rem'}}">
-                                    <img (load)="imgLoaded(i)" title="点击查看大图" onClick="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
                                 </div>
                             </div>
                         {{/if}}
@@ -150,7 +151,7 @@
                                 height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
                                     (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
                                     : i.content.msg_body.height/37.5/2+'rem'}}">
-                                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" alt="">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
                                 </div>
                             </div>
                         {{/if}}
@@ -166,7 +167,7 @@
                 {{include 'room-panel-time' i}}
                 <div >
                     <div class="avatar-box">
-                        <img class="avatar" src="{{content.avatarUrl ? content.avatarUrl : 'logo.png'}}" />
+                        <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
                     <div class="text"><p>{{content.msg_body.text}}</p></div>
                 </div> 
@@ -174,17 +175,17 @@
                 {{include 'room-panel-time' i}}
                 <div>
                     <div class="avatar-box">
-                        <img class="avatar" src="{{content.avatarUrl ? content.avatarUrl : 'logo.png'}}" />
+                        <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
-                    <div class="image {{!content.msg_body.loading?'img-loading':''}}"
-                    style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
-                    (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                    :content.msg_body.width/37.5/2+'rem'}};
-                    height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
-                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219 + 'px') 
-                    : content.msg_body.height/37.5/2+'rem'}}">
-                        <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
-                    </div>
+                    <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
+                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height*3 + 'rem')
+                                :i.content.msg_body.width/37.5/2+'rem'}};
+                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
+                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
+                                    : i.content.msg_body.height/37.5/2+'rem'}}">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
+                                </div>
                 </div>   
             {{/if}}
         </li>
@@ -197,12 +198,15 @@
                 <div class="avatar-box">
                     <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                 </div> 
-                <div class="image {{!content.msg_body.loading?'img-loading':''}}"
-                style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
-                (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                :content.msg_body.width/37.5/2+'rem'}}">
-                    <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
-                </div>
+                <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
+                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height*3 + 'rem')
+                                :i.content.msg_body.width/37.5/2+'rem'}};
+                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
+                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
+                                    : i.content.msg_body.height/37.5/2+'rem'}}">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
+                                </div>
             </div>
         {{/if}}
     </script>
@@ -228,15 +232,15 @@
                     <div class="avatar-box">
                         <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
-                    <div class="image {{!content.msg_body.loading?'img-loading':''}}"
-                    style="width:{{content.msg_body.width > 219 || content.msg_body.height > 300?
-                    (content.msg_body.width/content.msg_body.height > 219/300 ? 3 + 'rem' :content.msg_body.width/content.msg_body.height * 300 + 'px')
-                    :content.msg_body.width/37.5/2+'rem'}};
-                    height:{{content.msg_body.width > 219 || content.msg_body.height > 300 ? 
-                    (content.msg_body.width/content.msg_body.height < 219/300 ? 300 + 'px' : content.msg_body.height/content.msg_body.width * 219 + 'px') 
-                    : content.msg_body.height/37.5/2+'rem'}}">
-                        <img (load)="imgLoaded(i)" title="点击查看大图" (click)="imageViewerShow(i)" class="chat-panel-message-img" src="{{content.msg_body.media_url}}" alt="">
-                    </div>
+                    <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
+                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
+                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height*3 + 'rem')
+                                :i.content.msg_body.width/37.5/2+'rem'}};
+                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
+                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
+                                    : i.content.msg_body.height/37.5/2+'rem'}}">
+                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
+                                </div>
                 </div>
             {{/if}}
         </li>
@@ -247,6 +251,8 @@
 
 
     <script src="js/mui.min.js"></script>
+    <script src="js/mui.zoom.js"></script>
+    
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
@@ -254,14 +260,11 @@
     <script src="chatJIM/filter.js"></script>
     <script src="chatJIM/chat-reducer.js"></script>
     <script src="js/test0022.js"></script>
-
+    <script src="js/previewimage.js"></script>
     <script>
-
-
         var scroll = mui('.mui-scroll-wrapper').scroll({
             bounce: false //是否启用回弹
         });
-
         // 底部操作菜单
         var menuWrapper = document.getElementById("menu-wrapper");
         var menu = document.getElementById("menu");
@@ -285,10 +288,12 @@
         });
         // clickMask
         document.querySelector('#mask').addEventListener('touchstart', clickMask);
+
         function clickMask() {
             $('#textarea').blur();
             $('#mask').hide();
         }
+
         function toggleMenu() {
             if (busying) {
                 return;

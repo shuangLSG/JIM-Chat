@@ -137,53 +137,7 @@ $(function () {
         }
 
 
-        // 接收到单聊新消息
-        function receiveSingleMessage(data) {
-            console.log(data)
-            const content = data.messages[0].content;
-            const result = ChatStore.conversation.filter((conversation) => {
-                return data.messages[0].content.from_id === conversation.name;
-            });
-            if (result.length === 0) {
-                const messages = data.messages[0];
-                content = getMsgAvatarUrl(messages).content;
-            } else {
-                // 给已有的单聊用户添加头像()
-                content.avatarUrl = result[0].avatarUrl;
-            }
-            $('.messge ul').append(template('recivemsg_text', data.messages[0]))
-            scrollBottom(); // 滚动到底部
-        }
-        // 获取新消息的用户头像url
-        function getMsgAvatarUrl(messages) {
-            const username = messages.content.from_id !== global.username ?
-                messages.content.from_id : messages.content.target_id;
-            const userObj = {
-                username
-            };
-            JIM.getUserInfo({
-                ...userObj
-            }).onSuccess(function (data) {
-                if (!data.code && data.user_info.avatar !== '') {
-                    const urlObj = {
-                        media_id: data.user_info.avatar
-                    };
-                    JIM.getResource({
-                        ...urlObj
-                    }).onSuccess(function (data) {
-                        if (data.code) {
-                            messages.content.avatarUrl = '';
-                        } else {
-                            messages.content.avatarUrl = data.url;
-                        }
-                    })
-                }
-
-            }).onFail(function (data) {
-                console.log(data);
-            });
-            return messages;
-        }
+        
 
 
 
@@ -225,6 +179,81 @@ $(function () {
             })
         }
 
+            /**
+         * ========================
+         *        接收到单聊新消息
+         * ========================
+         */
+        async function receiveSingleMessage(data) {
+            const content = data.messages[0].content;
+            // 如果接收的是图片或者文件
+            data = await getMediaUrl(data);
+            console.log(data)
+            const result = ChatStore.conversation.filter((conversation) => {
+                return data.messages[0].content.from_id === conversation.name;
+            });
+            if (result.length === 0) {
+                const messages = data.messages[0];
+                const msg = getMsgAvatarUrl(messages);               
+                content = msg.content;
+            } else {
+                // 给已有的单聊用户添加头像
+                content.avatarUrl = result[0].avatarUrl;
+            }
+            
+            // Dom
+            const payload = {
+                success: 3,
+                type: 3,
+                messages: data.messages
+            }
+            addMessage(ChatStore, payload, global);
+            $('.message ul').append(template('recivemsg_text', ChatStore.newMessage))
+            scrollBottom(); // 滚动到底部
+        }
+        // 接收消息获取media url
+        async function getMediaUrl(data) {
+            if (data.messages[0].content.msg_body.media_id) {
+                const urlObj = { media_id: data.messages[0].content.msg_body.media_id };
+                const urlInfo = await apiService.getResource(urlObj);
+                if (urlInfo.code) {
+                    data.messages[0].content.msg_body.media_url = '';
+                } else {
+                    data.messages[0].content.msg_body.media_url = urlInfo.url;
+                }
+                return data;
+            }
+        }
+        // 获取新消息的用户头像url
+        function getMsgAvatarUrl(messages) {
+            const username = messages.content.from_id !== global.username ?
+                messages.content.from_id : messages.content.target_id;
+            const userObj = {
+                username
+            };
+            JIM.getUserInfo({
+                ...userObj         
+            }).onSuccess(function (data) {
+                if (!data.code && data.user_info.avatar !== '') {
+                    const urlObj = {
+                        media_id: data.user_info.avatar
+                    };
+                    JIM.getResource({
+                        ...urlObj
+                    }).onSuccess(function (data) {
+                        if (data.code) {
+                            messages.content.avatarUrl = '';
+                        } else {
+                            messages.content.avatarUrl = data.url;
+                        }
+                    })
+                }
+
+            }).onFail(function (data) {
+                console.log(data);
+            });
+            return messages;
+        }
         // ============================      获取离线消息
         function creatChatPanel(data) {
             getAllMessage(data).then(data => {

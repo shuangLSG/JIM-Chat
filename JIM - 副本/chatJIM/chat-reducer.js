@@ -1,7 +1,10 @@
-// 添加消息到消息列表
-/*function addMessage(state = RoomStore, payload) {
+
+
+// 添加消息到消息面板
+function addMessage(state = ChatStore, payload,global) {
+    
     // 判断消息是否要显示时间
-    if (state.messageList.length === 0) {
+    /*if (state.messageList.length === 0) {
         payload.time_show = Util.reducerDate(payload.ctime_ms);
     } else {
         const fiveMinutes =
@@ -10,16 +13,14 @@
         if (fiveMinutes) {
             payload.time_show = Util.reducerDate(payload.ctime_ms);
         }
-    }
+    }*/
     state.messageList.push(payload);
-}*/
-
-// 添加消息到消息面板
-function addMessage(state = ChatStore, payload,global) {
-    
     // 接收到别人的消息添加到消息列表/同步自己发送的消息
     if (payload.messages && payload.messages[0]) {
+
         let message = payload.messages[0];
+        // payload.msgs.ctime_ms = new Date().getTime();
+        payload = isShowTime(state, payload);
         if (message.msg_type === 3) {
             const isMySelf = message.content.from_id !== global.username;// false:是自己
             message.content.name = isMySelf ? message.content.from_id : message.content.target_id;
@@ -45,10 +46,6 @@ function addMessage(state = ChatStore, payload,global) {
                         state.conversation[a].unreadNum++;
                     }
                 }
-                // const atList = messageHasAtList(payload.messages[0].content.at_list);
-                // if (atList !== '') {
-                //     state.conversation[a].atUser = atList;
-                // }
             }
             flag = true;
             if (state.conversation[a].key < 0) {
@@ -64,15 +61,6 @@ function addMessage(state = ChatStore, payload,global) {
                     }
                 }
             }
-            // let index = a;
-            // if (!state.conversation[a].extras || !state.conversation[a].extras.top_time_ms) {
-            //     let item = state.conversation.splice(a, 1);
-            //     index = filterTopConversation(state, item[0]);
-            // }
-            // state.conversation[index].recentMsg = payload.messages[0];
-            // payload.messages[0].conversation_time_show = 'today';
-            // state.newMessageIsDisturb = state.conversation[index].noDisturb ? true : false;
-            // break;
         }
 
         for (let messageList of state.messageList) {
@@ -113,7 +101,7 @@ function addMyselfMesssge(state = ChatStore, payload,global) {
             });
             state.newMessage ={ ...payload.msgs,avatarUrl:global.avatarUrl};            
         }
-    } else {
+    }else {
         for (let messageList of state.messageList) {
             let msgs = messageList.msgs;
             if (msgs.length === 0 ||
