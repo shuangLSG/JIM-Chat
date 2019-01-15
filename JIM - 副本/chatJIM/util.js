@@ -1,10 +1,10 @@
- var Util={
-     /**
+var Util = {
+    /**
      * 深度拷贝对象（只能深度拷贝没有方法属性的对象）
      * @param {Object} obj - 需要拷贝的对象
      * @returns {Object} result - 新的对象
      */
-    deepCopyObj: function(obj) {
+    deepCopyObj: function (obj) {
         return JSON.parse(JSON.stringify(obj));
     },
     /**
@@ -12,21 +12,21 @@
      * @param {number} timestamp - 当前的时间毫秒数
      * @returns {string} 签名
      */
-    createSignature: function(timestamp) {
+    createSignature: function (timestamp) {
         return md5(`appkey=${authPayload.appkey}&timestamp=${timestamp}&random_str=${authPayload.randomStr}&key=${authPayload.masterSecret}`);
     },
-    getFileFormData:file=> {
+    getFileFormData: file => {
         let fd = new FormData();
         fd.append(file.files[0].name, file.files[0]);
         return fd;
     },
- /**
+    /**
      * fileReader预览图片返回img url
      * @param {Element} file - input type=file dom element
      * @param {Function} callback - 回调函数
      * @param {Function} callback2 - 回调函数
      */
-     imgReader: function(file, callback, callback2){
+    imgReader: function (file, callback, callback2) {
         let files = file.files[0];
         if (!files) {
             return false;
@@ -66,7 +66,7 @@
      * @param {Function} callback2 - 回调函数2
      * @param {Function} callback3 - 回调函数3
      */
-     getAvatarImgObj:function(file, callback1, callback2, callback3){
+    getAvatarImgObj: function (file, callback1, callback2, callback3) {
         if (!file) {
             return false;
         }
@@ -99,7 +99,7 @@
      * @param {Element} file - input type=file dom element
      * @param {Function} callback - 回调函数
      */
-     fileReader:function(file, callback){
+    fileReader: function (file, callback) {
         let files = file.files[0];
         if (!files.type || files.type === '') {
             return false;
@@ -118,7 +118,17 @@
             console.log('Promise Rejected');
         });
     },
-    reducerDate:function(msgTime){
+    /**
+     * 将时间转化成需要的格式
+     * @param {number} msgTime - 需要转换的时间毫秒数
+     * @returns {string} showTime - 时间的标识，根据标识可以再页面应用不同的date管道
+     * 当天 --- today
+     * 昨天和前天 --- yesterday或the day before
+     * 近7天（排除今天，昨天，前天） --- day
+     * 今年其他时间 --- month
+     * 今年之前的时间 --- year
+     */
+    reducerDate: function (msgTime) {
         const time = new Date(msgTime);
         const now = new Date();
         const msgYear = time.getFullYear();
@@ -145,34 +155,75 @@
         }
         return showTime;
     },
-    fiveMinutes :function(oldTime, newTime){
+    fiveMinutes: function (oldTime, newTime) {
         const gap = newTime - oldTime;
         return gap / 1000 / 60 > 5 ? true : false;
+    },
+    /**
+     * contenteditable输入框插入内容（表情、粘贴文本等）
+     * @param {Element} field - dom element
+     * @param {string} value - 需要插入的内容
+     * @param {boolean} selectPastedContent - 选中内容还是开始点和结束点一致
+     * 
+     * @method collapse() 折叠该范围，使它的边界点重合。
+     */
+    insertAtCursor: function (field, value, selectPastedContent) {
+        let sel;
+        let range; //表示文档的连续范围区域
+        field.focus();
+        if (window.getSelection) {
+            sel = window.getSelection();
+            if (sel.getRangeAt && sel.rangeCount) {
+                range = sel.getRangeAt(0);
+                range.deleteContents(); // 删除当前 Range 对象表示的文档区域
+                let el = document.createElement('div');
+                el.innerHTML = value;
+                let frag = document.createDocumentFragment();
+                let node;
+                let lastNode;
+                while ((node = el.firstChild)) {
+                    lastNode = frag.appendChild(node);
+                }
+                let firstNode = frag.firstChild;
+                range.insertNode(frag); // 把指定的节点插入文档范围的开始点
+                if (lastNode) {
+                    range = range.cloneRange();
+                    range.setStartAfter(lastNode);
+                    if (selectPastedContent) {
+                        range.setStartBefore(firstNode);
+                    } else {
+                        range.collapse(true);// 替换光标前emoji
+                    }
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }
+        }
     }
 }
 
 
-    // 获取图片对象
-    function getImgObj(file) {
-        var avatarConfig={};
-        const isNotImage = '选择的文件必须是图片';
-        const imageTooSmall = '选择的图片宽或高的尺寸太小，请重新选择图片';
-        Util.getAvatarImgObj(file,
-            () => mui.toast(isNotImage),
-            () => mui.toast(imageTooSmall),
-            (that, pasteFile, img) => {
-                avatarConfig={
-                    info : {
-                        src: that.result,
-                        width: img.naturalWidth,
-                        height: img.naturalHeight,
-                        pasteFile
-                    },
-                    src : that.result,
-                    show : true,
-                    filename : file.name
-                }
+// 获取图片对象
+function getImgObj(file) {
+    var avatarConfig = {};
+    const isNotImage = '选择的文件必须是图片';
+    const imageTooSmall = '选择的图片宽或高的尺寸太小，请重新选择图片';
+    Util.getAvatarImgObj(file,
+        () => mui.toast(isNotImage),
+        () => mui.toast(imageTooSmall),
+        (that, pasteFile, img) => {
+            avatarConfig = {
+                info: {
+                    src: that.result,
+                    width: img.naturalWidth,
+                    height: img.naturalHeight,
+                    pasteFile
+                },
+                src: that.result,
+                show: true,
+                filename: file.name
             }
-        );
-        return avatarConfig;
-    }
+        }
+    );
+    return avatarConfig;
+}

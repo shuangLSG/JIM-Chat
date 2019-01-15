@@ -120,8 +120,6 @@
 
 		if (img._img_css_data && img._img_css_data.src === src) { //已缓存且图片未变化
 			this.groups[group].push(img._img_css_data);
-		} else {
-			
 		}
 	};
 
@@ -133,9 +131,6 @@
 		if (!itemData._img_css_data.sWidth) {
 			var img = itemData._img_css_data.el;
 			var offset = $.offset(img);
-			// intiSize = parseInt(document.getElementsByTagName('html')[0].style.fontSize),
-			// sWidth= (img.width>219 ||img.height>300) ? (img.width/img.height>219/300 ? 3*intiSize:img.width/img.height*300)  :img.width/2/37.5*intiSize,
-			// sHeight= (img.width>219 ||img.height>300) ? (img.width/img.height<219/300 ? 3*intiSize:img.height/img.width*219/2/37.5*intiSize)  :img.height/2/37.5*intiSize;
 		
 			itemData._img_css_data.sWidth = img.width;
 			itemData._img_css_data.sHeight = img.height;			

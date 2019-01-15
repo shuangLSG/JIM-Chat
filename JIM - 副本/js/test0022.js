@@ -7,7 +7,7 @@ $(function () {
                 newMessage: {},
                 imageViewer: []
             },
-            
+
             userInfo = {
                 avatarUrl: ""
             },
@@ -75,6 +75,7 @@ $(function () {
             indicators: false, //是否显示滚动条
             deceleration: deceleration
         });
+
         function scrollBottom() {
             mui('.mui-scroll-wrapper').scroll().reLayout();
             mui('.mui-scroll-wrapper').scroll().scrollToBottom(10);
@@ -131,7 +132,7 @@ $(function () {
         }
 
 
-        
+
 
 
 
@@ -173,7 +174,7 @@ $(function () {
             })
         }
 
-            /**
+        /**
          * ========================
          *        接收到单聊新消息
          * ========================
@@ -188,13 +189,13 @@ $(function () {
             });
             if (result.length === 0) {
                 const messages = data.messages[0];
-                const msg = getMsgAvatarUrl(messages);               
+                const msg = getMsgAvatarUrl(messages);
                 content = msg.content;
             } else {
                 // 给已有的单聊用户添加头像
                 content.avatarUrl = result[0].avatarUrl;
             }
-            
+
             // Dom
             const payload = {
                 success: 3,
@@ -202,13 +203,15 @@ $(function () {
                 messages: data.messages
             }
             addMessage(ChatStore, payload, global);
-            $('.message ul').append(template('recivemsg_text', ChatStore.newMessage))
+            $('.message ul').append(template('recivemsg', ChatStore.newMessage))
             scrollBottom(); // 滚动到底部
         }
         // 接收消息获取media url
         async function getMediaUrl(data) {
             if (data.messages[0].content.msg_body.media_id) {
-                const urlObj = { media_id: data.messages[0].content.msg_body.media_id };
+                const urlObj = {
+                    media_id: data.messages[0].content.msg_body.media_id
+                };
                 const urlInfo = await apiService.getResource(urlObj);
                 if (urlInfo.code) {
                     data.messages[0].content.msg_body.media_url = '';
@@ -226,7 +229,7 @@ $(function () {
                 username
             };
             JIM.getUserInfo({
-                ...userObj         
+                ...userObj
             }).onSuccess(function (data) {
                 if (!data.code && data.user_info.avatar !== '') {
                     const urlObj = {
@@ -267,9 +270,7 @@ $(function () {
                 }
                 return info;
             }).then(info => {
-
                 getMemberAvatarUrl(info).then(msgs => {
-
                     getSourceUrl(info).then(data => {
                         if (data && data.length > pageNumber) {
                             msgs = data.slice(data.length - pageNumber);
@@ -285,18 +286,18 @@ $(function () {
                         $('.message ul').html(template('test', json));
                         scrollBottom(); // 滚动到底部
 
-                        // 图片预览的处理
-                        let imgResult = filterImageViewer();
-                        mui.previewImage({
-                            imageViewer : {
-                                result: imgResult,
-                                active: {
-                                    index: -1
-                                },
-                                show: false,
-                            }
-                        });
-                        console.log(imgResult)
+                        //图片预览
+                        filterImageViewer().then(viewer=>{
+                            mui.previewImage({
+                                imageViewer: {
+                                    result: viewer,
+                                    active: {
+                                        index: -1
+                                    },
+                                    show: false,
+                                }
+                            });
+                        })
                     })
                 })
             })
@@ -307,29 +308,37 @@ $(function () {
          *        图片预览
          * ========================
          */
+        
         // 过滤出当前图片预览的数组
         function filterImageViewer() {
-            let messageList = ChatStore.messageList[activeIndex];
-            if (activeIndex < 0 || !messageList || !messageList.msgs) {
-                return [];
-            }
-            let imgResult = [];
-            let msgs = messageList.msgs;
-            for (let message of msgs) {
-                let content = message.content;
-                const jpushEmoji = (!content.msg_body.extras || !content.msg_body.extras.kLargeEmoticon ||
-                    content.msg_body.extras.kLargeEmoticon !== 'kLargeEmoticon');
-                if (content.msg_type === 'image' && jpushEmoji) {
-                    imgResult.push({
-                        mediaId: content.msg_body.media_id,
-                        src: content.msg_body.media_url,
-                        width: content.msg_body.width,
-                        height: content.msg_body.height,
-                        msg_id: message.msg_id
-                    });
+            return new Promise((resolve) => {
+                let messageList = ChatStore.messageList[activeIndex];
+                if (activeIndex < 0 || !messageList || !messageList.msgs) {
+                    return [];
                 }
-            }
-            return imgResult;
+                let imgResult = [];
+                let msgs = messageList.msgs;
+                for (let message of msgs) {
+                    let content = message.content;
+                    const jpushEmoji = (!content.msg_body.extras || !content.msg_body.extras.kLargeEmoticon ||
+                        content.msg_body.extras.kLargeEmoticon !== 'kLargeEmoticon');
+                    if (content.msg_type === 'image' && jpushEmoji) {
+                        imgResult.push({
+                            mediaId: content.msg_body.media_id,
+                            src: content.msg_body.media_url,
+                            width: content.msg_body.width,
+                            height: content.msg_body.height,
+                            msg_id: message.msg_id
+                        });
+                    }
+                }
+                for (let img of imgResult) {
+                    loadViewerImage(img);
+                }
+                setTimeout(function () {
+                    resolve(imgResult);
+                }, 400)
+            })
         }
         // 加载预览图片的图片url
         async function loadViewerImage(info) {
@@ -341,27 +350,12 @@ $(function () {
                 this.errorFn(data);
             } else {
                 info.src = data.url;
-                // 加载图片预览没有加载的图片url
-                // ChatStore.viewerImageUrl = info;
-                addImageUrl(info);
             }
         };
-
-        function addImageUrl(viewerImageUrl) {
-            for (let img of imageViewer.result) {
-                if (img.index === viewerImageUrl.index && img.src === viewerImageUrl.src) {
-                    img.src = viewerImageUrl.src;
-                    imageViewer.active = Util.deepCopyObj(imageViewer.result[imgviewindex]);
-                    imageViewer.active.index = imgviewindex;
-                    break;
-                }
-            }
-        }
         // 图片预览
         function imageViewerShow(item) {
             for (let i = 0; i < imageViewer.result.length; i++) {
                 const msgIdFlag = item.msg_id && imageViewer.result[i].msg_id == item.msg_id;
-                // const msgKeyFlag = item.msgKey && imageViewer.result[i].msgKey === item.msgKey;
                 if (msgIdFlag) {
                     imageViewer.active = Util.deepCopyObj(imageViewer.result[i]);
                     imageViewer.active.index = i;
@@ -370,90 +364,9 @@ $(function () {
             }
             imageViewer.show = true;
             console.log(imageViewer)
-            // viewer = imageViewer;
         }
-
-        function prev() {
-            const activeIndex = imageViewer.active.index;
-            const index = activeIndex > 0 ? activeIndex - 1 : activeIndex;
-            imgviewindex = index;
-            if (imgviewindex !== activeIndex) {
-                // 如果该图片的url尚未加载，则去请求url
-                if (!imageViewer.result[index].src) {
-                    // this.imgHidden = true;
-                    // this.store$.dispatch({
-                    //     type: chatAction.loadViewerImage,
-                    //     payload: this.imageViewer.result[index]
-                    // });
-                } else {
-                    // 为了解决相邻两张相同的base64图片不触发onload事件
-                    if (imageViewer.active.src === imageViewer.result[index].src) {
-                        this.imgHidden = false;
-                    } else {
-                        this.imgHidden = true;
-                    }
-                    imageViewer.active = Object.assign({}, imageViewer.result[index], {});
-                    imageViewer.active.index = index;
-                }
-            } else {
-                mui.toast('已经是第一张了');
-            }
-        }
-
-        function next() {
-            const activeIndex = imageViewer.active.index;
-            const index = activeIndex < imageViewer.result.length - 1 ?
-                activeIndex + 1 : activeIndex;
-            if (index !== activeIndex) {
-                // 为了解决相邻两张相同的base64图片不触发onload事件
-                if (imageViewer.active.src === imageViewer.result[index].src) {
-                    this.imgHidden = false;
-                } else {
-                    this.imgHidden = true;
-                }
-                imageViewer.active = Object.assign({}, imageViewer.result[index], {});
-                imageViewer.active.index = index;
-            } else {
-                mui.toast('已经是最后一张了');
-            }
-        }
-
-        function closeViewerAction(event) {
-            this.imageViewer.show = false;
-            this.closeImageViewer.emit();
-            event.stopPropagation();
-        }
-        // ==========================================页面事件操作
-        // 发送文本信息
-        document.querySelector('.action').addEventListener('tap', function (e) {
-            var oTarget = e.target;
-            if (oTarget.id == 'test-send') {
-                sendSingleMsg();
-            }
-        });
-        // 发送图片信息
-        var oimg = document.querySelector('#sendPic2');
-        var PicURL = window.URL || window.webkitURL;
-        if (PicURL) {
-            // 给input添加监听
-            $(oimg).change(function () {
-                var file = oimg;
-                let img = Util.getFileFormData(oimg);
-                const emit = {
-                    img: img,
-                    type: "send"
-                }
-                sendPicAction(file, emit);
-            })
-        }
-        // mui('.mui-scroll').on('tap', '.image img', function () {
-        //     console.log(this)
-        //     var msg_id = this.dataset.msg_id;
-        //     imageViewerShow({
-        //         msg_id: msg_id
-        //     });
-        // })
-
+       
+      
 
 
         //获取对话列表
@@ -677,7 +590,8 @@ $(function () {
         }
         // 发送新消息
         function sendSingleMsg(oTarget) {
-            var content = $('.action textarea').val();
+            // var content = $('.action textarea').val();
+            var content = $('#contentDiv2').html().trim();
             if (content == '') return;
             JIM.sendSingleMsg({
                 'target_username': targetUser.across_user,
@@ -695,7 +609,7 @@ $(function () {
                 addMessage(ChatStore, payload, global);
                 $('.message ul').append(template('send_singlemsg_text', ChatStore.newMessage))
                 scrollBottom(); // 滚动到底部
-                $('.action textarea').val('');
+                $('#contentDiv2').html('');
             })
         }
 
@@ -711,7 +625,7 @@ $(function () {
             $('.message ul').append(template('send_singlemsg_img', ChatStore.newMessage))
             scrollBottom(); // 滚动到底部
         }
-
+           
         function sendPicAction(file, data) {
             const isNotImage = '选择的文件必须是图片';
             Util.imgReader(file,
@@ -757,7 +671,12 @@ $(function () {
             })
         }
 
-
+        // 表情
+        function emojiSelectAction(idName){
+            const insertHtml = $('#'+idName).html().trim();
+            const oContent = $('#contentDiv2');
+            Util.insertAtCursor(oContent,insertHtml,false);
+        }
 
         // =====================================  个人消息
 
@@ -822,5 +741,43 @@ $(function () {
                 }
             }
         }
+
+
+         // ==========================================页面事件操作
+        // 发送文本信息
+        document.querySelector('.action').addEventListener('tap', function (e) {
+            var oTarget = e.target;
+            if (oTarget.id == 'test-send') {
+                sendSingleMsg();
+            }
+        });
+        // 发送图片信息
+        var oimg = document.querySelector('#sendPic2');
+        var PicURL = window.URL || window.webkitURL;
+        if (PicURL) {
+            // 给input添加监听
+            $(oimg).change(function () {
+                var file = oimg;
+                let img = Util.getFileFormData(oimg);
+                const emit = {
+                    img: img,
+                    type: "send"
+                }
+                sendPicAction(file, emit);
+            })
+        }
+
+        //表情
+        $('#slider').on('tap','li',function(){
+            console.log($(this).html());
+            // var insertHtml=$(this).html(),
+            // text = $('#textarea').val();
+            emojiSelectAction(this.id);
+            // const sendPic={
+            //     jpushEmoji,
+            //     type: 'jpushEmoji'
+            // };
+            // jpushEmojiSelectEmit(jpushEmoji);
+        });
     })(mui, jQuery)
 })

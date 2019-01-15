@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<title>test0022</title>
-<script src="data.js"></script>
-<link rel="stylesheet" href="css/mui.min.css">
-<link rel="stylesheet" href="css/chat.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <title>test0022</title>
+    <script src="data.js"></script>
+    <link rel="stylesheet" href="css/mui.min.css">
+    <link rel="stylesheet" href="css/chat.css">
 
-<style>
-    body {
+
+    <style>
+        body {
         position: absolute;
         left: 0;
         right: 0;
@@ -34,6 +36,26 @@
         z-index: 2;
         display: none;
     }
+
+    .emoji-normal li{
+        float:left;
+        width: 12.5%;
+        margin-bottom: 0.1rem;
+    }
+    .emoji-normal li span{
+        font-size: 0.6rem;
+    }
+    .emoji-normal .mui-slider{
+        padding-top: 0.7rem;
+        padding-bottom: 1rem;
+    }
+    .emoji-normal .mui-slider ul{
+        overflow: hidden;
+        padding: 0 0.4rem;
+    }
+    .emoji-normal .mui-slider .mui-slider-group .mui-slider-item img{
+        width: 0.8rem;
+    }
 </style>
 </head>
 
@@ -45,8 +67,12 @@
     </div>
     <footer class="mui-bar mui-bar-tab">
         <div class="action">
-            <textarea id="textarea" class="margin-l-26"></textarea>
+                <div  class="room-panel-content-text margin-l-26" style="width: 3rem;
+                " contenteditable="true" id="contentDiv2" spellcheck="false">
+                </div>
+            <!-- <textarea id="textarea" class="margin-l-26"></textarea> -->
             <span id="menu-btn" class="mui-icon mui-icon-plus margin-h-26"></span>
+            <img id="emoji-btn" class="chat-panel-emoji-btn" src="image/icon_emoji.png" alt="表情">
             <button id="test-send" type="button" class="mui-btn mui-btn-primary">发送</button>
         </div>
         <div id="room-container">
@@ -54,7 +80,6 @@
 
             <div id="menu-wrapper" class="menu-wrapper hidden">
                 <div id="menu" class="menu">
-
                     <div class="room-panel-message-input">
                         <div class="room-panel-send-file">
                             <div class="room-panel-item">
@@ -66,10 +91,14 @@
                             </div>
                         </div>
                     </div>
-
+                    
                 </div>
             </div>
-
+            <div class="chat-panel-emoji">
+                <div class="emoji-normal">
+                    <ul></ul>
+                </div>
+            </div>
         </div>
         <!-- <form id='myForm'>
                 <input type='text' name='usrName' value='kevin'/>
@@ -135,7 +164,7 @@
                                 <div class="avatar-box">
                                     <img class="avatar" src="{{i.content.avatarUrl?i.content.avatarUrl:'logo.png'}}" />
                                 </div> 
-                                <div class="text"><p>{{i.content.msg_body.text}}</p></div>
+                                <div class="text"><p>{{@ i.content.msg_body.text}}</p></div>
                             </div>
                         
                         {{else if i.content.msg_type === 'image' &&(!i.content.msg_body.extras || (i.content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon))}}
@@ -161,7 +190,7 @@
     </script>
 
     <!-- 别人发送的消息 -->
-    <script id="recivemsg_text" type="text/html">
+    <script id="recivemsg" type="text/html">
         <li>
             {{if content.msg_type === 'text' && (!content.msg_body.extras || !content.msg_body.extras.businessCard)}}
                 {{include 'room-panel-time' i}}
@@ -169,7 +198,7 @@
                     <div class="avatar-box">
                         <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
-                    <div class="text"><p>{{content.msg_body.text}}</p></div>
+                    <div class="text"><p>{{@ content.msg_body.text}}</p></div>
                 </div> 
             {{else if content.msg_type === 'image' || (content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon)}}
                 {{include 'room-panel-time' i}}
@@ -191,25 +220,6 @@
         </li>
     </script>
 
-    <script id="recivemsg_img" type="text/html">
-        {{if !content.msg_body.extras || (content.msg_body.extras && !content.msg_body.extras.kLargeEmoticon)}}
-            {{include 'room-panel-time' i}}
-            <div>
-                <div class="avatar-box">
-                    <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
-                </div> 
-                <div class="image {{!i.content.msg_body.loading?'img-loading':''}}"
-                                style="width:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300?
-                                (i.content.msg_body.width/i.content.msg_body.height > 219/300 ? 3 + 'rem' :i.content.msg_body.width/i.content.msg_body.height*3 + 'rem')
-                                :i.content.msg_body.width/37.5/2+'rem'}};
-                                height:{{i.content.msg_body.width > 219 || i.content.msg_body.height > 300 ? 
-                                    (i.content.msg_body.width/i.content.msg_body.height < 219/300 ?3+'rem' : i.content.msg_body.height/i.content.msg_body.width * 219/37.5/2 + 'rem') 
-                                    : i.content.msg_body.height/37.5/2+'rem'}}">
-                                    <img  title="点击查看大图" data-msg_id="{{i.msg_id}}" class="chat-panel-message-img" src="{{i.content.msg_body.media_url}}" data-preview-src="" alt="">
-                                </div>
-            </div>
-        {{/if}}
-    </script>
     <!-- 自己发送的消息 -->
     <script id="send_singlemsg_text" type="text/html">
         <li>
@@ -219,7 +229,7 @@
                     <div class="avatar-box">
                         <img class="avatar" src="{{avatarUrl ? avatarUrl : 'logo.png'}}" />
                     </div> 
-                    <div class="text"><p>{{content.msg_body.text}}</p></div>
+                    <div class="text"><p>{{@ content.msg_body.text}}</p></div>
                 </div>              
             {{/if}}
         </li>
@@ -245,6 +255,33 @@
             {{/if}}
         </li>
     </script>
+
+
+    <script id="slider_tpl" type="text/html">
+        <div id="slider" class="mui-slider">
+			<div class="mui-slider-group">
+				{{each emojiData slider index}}
+                    <div class="mui-slider-item">
+                        <ul>
+                            {{each slider item i}}
+                                <li id="emoji-face_{{item.imgNum}}">
+                                    {{@ item.unicode|pemoji 20}}
+                                </li>
+                            {{/each}}
+                            <img id="delete_emoji" src="image/icon_emoji.png"/>
+                        </ul>		
+                    </div>
+                {{/each}}
+			</div>
+			<div class="mui-slider-indicator">
+                {{each emojiData slider index}}
+                    <div class="mui-indicator {{index==0?'mui-active':''}}"></div>
+                {{/each}}
+			</div>
+		</div>
+    </script>
+   
+    
     <script src="data.js"></script>
     <script src="js/rem.js"></script>
     <script src="js/template.js"></script>
@@ -252,10 +289,13 @@
 
     <script src="js/mui.min.js"></script>
     <script src="js/mui.zoom.js"></script>
-    
+
     <script src="js/jquery.min.js"></script>
     <script src="js/jmessage-sdk-web.2.6.0.min.js"></script>
     <script src="chatJIM/services/api.service.js"></script>
+    <script src="chatJIM/common/emoji-config.js"></script>
+    <script src="chatJIM/common/emoji.js"></script>
+
     <script src="chatJIM/util.js"></script>
     <script src="chatJIM/filter.js"></script>
     <script src="chatJIM/chat-reducer.js"></script>
@@ -288,6 +328,29 @@
         });
         // clickMask
         document.querySelector('#mask').addEventListener('touchstart', clickMask);
+
+
+
+
+        // emoji 表情        
+        var emojiData = [];
+        for(let i=0,j=0;i<emojiConfig.length;i++){
+            if(i%23==0){
+                console.log(emojiConfig.slice((j-1)*23,i))
+                if(emojiConfig.slice((j-1)*23,i).length>0){
+                    emojiData[j-1] = emojiConfig.slice((j-1)*23,i);
+                }
+                j++;
+            }else{
+                emojiData[j-1] = emojiConfig.slice((j-1)*23, emojiConfig.length);
+            }
+        }
+        $('.emoji-normal').html(template('slider_tpl', {
+            emojiData: emojiData
+        }));
+        console.log(emojiData);
+        
+
 
         function clickMask() {
             $('#textarea').blur();
